@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MealMenu, MealRecord, Deposit, DashboardStats } from '../types.js';
+import { User, MealMenu, MealRecord, Deposit, DashboardStats } from '../types';
 import { Coins, Utensils, Calendar, Receipt, CreditCard, Clock, FileText, CheckCircle2, AlertTriangle, Send, Plus, Minus } from 'lucide-react';
 
 interface MemberDashboardProps {

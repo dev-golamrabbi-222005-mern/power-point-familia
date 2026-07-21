@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LogOut, User as UserIcon, Phone, Mail, Settings, Check, AlertCircle, Save, Menu, X, Coins, ShieldCheck, UserCheck, Shield } from 'lucide-react';
-import { User, DashboardStats } from '../types.js';
+import { User, DashboardStats } from '../types';
 
 interface DashboardLayoutProps {
   user: User;

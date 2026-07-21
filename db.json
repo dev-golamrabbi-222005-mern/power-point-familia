@@ -1,0 +1,120 @@
+{
+  "users": [
+    {
+      "id": "user-admin",
+      "email": "admin@familia.com",
+      "name": "System Admin",
+      "phone": "01712345678",
+      "role": "admin",
+      "status": "approved",
+      "createdAt": "2026-07-21T13:10:13.587Z",
+      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
+    },
+    {
+      "id": "user-developer",
+      "email": "g.rabbi2005.555@gmail.com",
+      "name": "Rabbi Developer",
+      "phone": "01812345678",
+      "role": "admin",
+      "status": "approved",
+      "createdAt": "2026-07-21T13:10:13.587Z",
+      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
+    },
+    {
+      "id": "user-manager",
+      "email": "manager@familia.com",
+      "name": "Rahim Manager",
+      "phone": "01912345678",
+      "role": "manager",
+      "status": "approved",
+      "createdAt": "2026-07-21T13:10:13.587Z",
+      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
+    },
+    {
+      "id": "user-member",
+      "email": "member@familia.com",
+      "name": "Karim Member",
+      "phone": "01512345678",
+      "role": "member",
+      "status": "approved",
+      "createdAt": "2026-07-21T13:10:13.587Z",
+      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
+    },
+    {
+      "id": "user-guest",
+      "email": "guest@familia.com",
+      "name": "Sajal Guest",
+      "phone": "01612345678",
+      "role": "user",
+      "status": "pending",
+      "createdAt": "2026-07-21T13:10:13.587Z",
+      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
+    }
+  ],
+  "menus": [
+    {
+      "id": "menu-1",
+      "date": "2026-07-21",
+      "mealType": "lunch",
+      "items": [
+        "Steamed Rice",
+        "Beef Bhuna",
+        "Lentil Soup",
+        "Salad"
+      ],
+      "estimatedCost": 60
+    },
+    {
+      "id": "menu-2",
+      "date": "2026-07-21",
+      "mealType": "dinner",
+      "items": [
+        "Roti/Paratha",
+        "Chicken Curry",
+        "Dal Makhani"
+      ],
+      "estimatedCost": 50
+    }
+  ],
+  "records": [
+    {
+      "id": "rec-1",
+      "userId": "user-member",
+      "date": "2026-07-21",
+      "mealType": "lunch",
+      "count": 1
+    },
+    {
+      "id": "rec-2",
+      "userId": "user-member",
+      "date": "2026-07-21",
+      "mealType": "dinner",
+      "count": 1
+    }
+  ],
+  "deposits": [
+    {
+      "id": "dep-1",
+      "userId": "user-member",
+      "amount": 1500,
+      "date": "2026-07-21",
+      "paymentMethod": "bKash",
+      "transactionId": "TRX99887766",
+      "status": "approved",
+      "remarks": "Monthly advanced meal fee"
+    },
+    {
+      "id": "dep-2",
+      "userId": "user-member",
+      "amount": 500,
+      "date": "2026-07-21",
+      "paymentMethod": "Cash",
+      "transactionId": "CASH-001",
+      "status": "pending",
+      "remarks": "Extra money for dinner party"
+    }
+  ],
+  "settings": {
+    "mealRate": 45
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, SystemSettings } from '../types.js';
+import { User, UserRole, SystemSettings } from '../types';
 import { ShieldAlert, Users, Coins, ShieldCheck, CheckCircle2, Sliders, Save, RefreshCw, AlertCircle, Trash2, Heart } from 'lucide-react';
 
 interface AdminDashboardProps {

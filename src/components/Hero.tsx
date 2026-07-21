@@ -1,6 +1,6 @@
 import React from 'react';
 import { Utensils, Shield, CheckCircle2, TrendingUp, Users, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
-import { MealMenu } from '../types.js';
+import { MealMenu } from '../types';
 
 interface HeroProps {
   onLoginClick: () => void;

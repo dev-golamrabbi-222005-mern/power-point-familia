@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MealMenu, MealRecord, Deposit, DashboardStats } from '../types.js';
+import { User, MealMenu, MealRecord, Deposit, DashboardStats } from '../types';
 import { ChefHat, Plus, Trash2, Edit3, ClipboardList, Check, X, Calendar, DollarSign, Users, RefreshCw, AlertCircle, TrendingUp, HelpCircle } from 'lucide-react';
 
 interface ManagerDashboardProps {

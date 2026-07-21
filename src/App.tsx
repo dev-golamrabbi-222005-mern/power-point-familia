@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { User, MealMenu, DashboardStats } from './types.js';
-import Hero from './components/Hero.js';
-import AuthModal from './components/AuthModal.js';
-import DashboardLayout from './components/DashboardLayout.js';
-import GuestDashboard from './components/GuestDashboard.js';
-import MemberDashboard from './components/MemberDashboard.js';
-import ManagerDashboard from './components/ManagerDashboard.js';
-import AdminDashboard from './components/AdminDashboard.js';
+import { User, MealMenu, DashboardStats } from './types';
+import Hero from './components/Hero';
+import AuthModal from './components/AuthModal';
+import DashboardLayout from './components/DashboardLayout';
+import GuestDashboard from './components/GuestDashboard';
+import MemberDashboard from './components/MemberDashboard';
+import ManagerDashboard from './components/ManagerDashboard';
+import AdminDashboard from './components/AdminDashboard';
 import { Utensils, Shield, KeyRound, Sparkles } from 'lucide-react';
 
 export default function App() {

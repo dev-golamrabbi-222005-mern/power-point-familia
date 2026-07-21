@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, DashboardStats } from '../types.js';
+import { User, DashboardStats } from '../types';
 import { Clock, ShieldAlert, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface GuestDashboardProps {
