@@ -102,9 +102,27 @@
       "date": "2026-07-21",
       "mealType": "dinner",
       "count": 1
+    },
+    {
+      "id": "rec-1784730953716-902",
+      "userId": "user-member",
+      "date": "2026-07-22",
+      "mealType": "lunch",
+      "count": 1
     }
   ],
-  "deposits": [],
+  "deposits": [
+    {
+      "id": "dep-1784730917099",
+      "userId": "user-member",
+      "amount": 1000,
+      "date": "2026-07-22",
+      "paymentMethod": "bKash",
+      "transactionId": "sdfsdfsdf",
+      "status": "approved",
+      "remarks": "sdfadf"
+    }
+  ],
   "bazaarAssignments": [],
   "bazaarExpenses": [],
   "bazaarPairs": [],

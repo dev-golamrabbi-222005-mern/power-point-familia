@@ -11,90 +11,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/api/auth/me/route": [
+    "/api/menu/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/auth/me/route.js"
-    ],
-    "/api/bazaar/assign/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/bazaar/assign/route.js"
-    ],
-    "/api/dashboard/stats/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/dashboard/stats/route.js"
-    ],
-    "/api/bazaar/pairs/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/bazaar/pairs/route.js"
+      "static/chunks/app/api/menu/route.js"
     ],
     "/api/public/calendar/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/public/calendar/route.js"
     ],
-    "/api/utilities/route": [
+    "/api/auth/me/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/utilities/route.js"
-    ],
-    "/api/settings/auto-book/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/settings/auto-book/route.js"
-    ],
-    "/api/menu/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/menu/route.js"
-    ],
-    "/api/records/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/records/route.js"
-    ],
-    "/api/bazaar/expense/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/bazaar/expense/route.js"
+      "static/chunks/app/api/auth/me/route.js"
     ],
     "/api/settings/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/settings/route.js"
-    ],
-    "/api/deposits/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/deposits/route.js"
-    ],
-    "/api/records/book/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/records/book/route.js"
-    ],
-    "/api/auth/login/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/auth/login/route.js"
-    ],
-    "/api/refunds/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/refunds/route.js"
-    ],
-    "/api/members/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/members/route.js"
-    ],
-    "/api/public/ledger/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/public/ledger/route.js"
     ]
   }
 }

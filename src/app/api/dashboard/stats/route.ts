@@ -27,14 +27,20 @@ export async function GET(req: NextRequest) {
     const userRole = user!.role;
     const baseRate = db.settings?.mealRate || 45;
     
-    // Calculate LIVE meal rate: Total cost of all menu items / Total meals consumed
+    // Calculate LIVE meal rate: Total Month's Approved Bazaar Expense / Total Meals Consumed by all members
     const allMealsCount = db.records.reduce((sum, r) => sum + r.count, 0);
-    const totalMenuCost = db.menus.reduce((sum, m) => sum + (m.estimatedCost || 0), 0);
-    const liveMealRate = allMealsCount > 0 && totalMenuCost > 0
-      ? Math.round((totalMenuCost / allMealsCount) * 100) / 100
+    const totalBazaarExpenses = db.bazaarExpenses
+      .filter(e => e.status === 'approved')
+      .reduce((sum, e) => sum + e.totalCost, 0);
+      
+    const liveMealRate = allMealsCount > 0 && totalBazaarExpenses > 0
+      ? Math.round((totalBazaarExpenses / allMealsCount) * 100) / 100
       : baseRate;
 
-    // A: Calculate Member statistics (approved deposits, consumed/booked meals)
+    // A: Calculate Member statistics (approved deposits, consumed/booked meals, carry forward)
+    const dbUser = db.users.find(u => u.id === userId);
+    const carryForward = dbUser?.previousMonthCarryForward || 0;
+
     const userDeposits = db.deposits.filter(d => d.userId === userId);
     const totalDeposits = userDeposits
       .filter(d => d.status === 'approved')
@@ -47,7 +53,7 @@ export async function GET(req: NextRequest) {
     const userMealRecords = db.records.filter(r => r.userId === userId);
     const totalMealsCount = userMealRecords.reduce((sum, r) => sum + r.count, 0);
     const totalMealCost = Math.round(totalMealsCount * liveMealRate * 100) / 100;
-    const totalBalance = Math.round((totalDeposits - totalMealCost) * 100) / 100;
+    const totalBalance = Math.round((carryForward + totalDeposits - totalMealCost) * 100) / 100;
 
     // Get current week's payment status
     const currentWeek = getCurrentWeekStart();
@@ -90,6 +96,7 @@ export async function GET(req: NextRequest) {
         totalMealCost,
         pendingDeposits,
         liveMealRate,
+        previousMonthCarryForward: carryForward,
         weeklyPaymentStatus,
         utilities: {
           rent,
@@ -117,16 +124,15 @@ export async function GET(req: NextRequest) {
       const membersCount = db.users.filter(u => u.role === 'member' && u.status === 'approved').length;
       const activeMenuCount = db.menus.length;
 
-      // Bazaar expense totals
-      const totalBazaarExpenses = db.bazaarExpenses
-        .filter(e => e.status === 'approved')
-        .reduce((sum, e) => sum + e.totalCost, 0);
+      // Cash in hand = Sum of all approved member deposits - Sum of all approved bazaar expenses
+      const totalCashInHand = allApprovedDeposits - totalBazaarExpenses;
       const pendingBazaarCount = db.bazaarExpenses.filter(e => e.status === 'pending').length;
 
       // Calculate deficit members (balance < 0)
       const deficitMembers = db.users
         .filter(u => u.role === 'member' && u.status === 'approved')
         .map(u => {
+          const uCarryForward = u.previousMonthCarryForward || 0;
           const memberDeposits = db.deposits
             .filter(d => d.userId === u.id && d.status === 'approved')
             .reduce((sum, d) => sum + d.amount, 0);
@@ -134,7 +140,7 @@ export async function GET(req: NextRequest) {
             .filter(r => r.userId === u.id)
             .reduce((sum, r) => sum + r.count, 0);
           const memberCost = Math.round(memberMeals * liveMealRate * 100) / 100;
-          const balance = Math.round((memberDeposits - memberCost) * 100) / 100;
+          const balance = Math.round((uCarryForward + memberDeposits - memberCost) * 100) / 100;
           return { userId: u.id, name: u.name, balance };
         })
         .filter(m => m.balance < 0);
@@ -150,18 +156,22 @@ export async function GET(req: NextRequest) {
         a => a.date >= weekStart && a.date <= weekEnd
       ).length;
 
+      const pendingResetRequest = (db.monthlySummaries || []).find(s => s.status === 'pending_approval') || null;
+
       stats.managerStats = {
         totalSystemBalance,
         totalSystemDeposits: allApprovedDeposits,
         totalSystemMealsCount: allMealsCount,
         totalSystemMealCost: allMealCost,
         liveMealRate,
+        totalCashInHand,
         pendingDepositsCount: allPendingDepositsCount,
         membersCount,
         activeMenuCount,
         totalBazaarExpenses,
         pendingBazaarCount,
         deficitMembers,
+        pendingResetRequest,
         autoBookEnabled: db.settings.autoBookMeals ?? true,
         bazaarRotationOrder: approvedMembers.map(m => ({
           userId: m.id,

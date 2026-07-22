@@ -10,6 +10,8 @@ export interface User {
   createdAt: string;
   bazaarCount: number; // Tracks how many bazaar duties this user has done
   autoBookDisabled?: boolean; // Member-level opt-out from auto-booking
+  previousMonthCarryForward?: number; // Opening balance carry forward from previous month
+  pushSubscriptions?: any[]; // Array of Web Push Notification subscriptions
 }
 
 export interface MealMenu {
@@ -186,5 +188,31 @@ export interface DashboardStats {
     autoBookEnabled: boolean;
     bazaarRotationOrder: { userId: string; name: string; bazaarCount: number }[];
     weekBazaarCount: number; // How many bazaars scheduled this week
+    totalCashInHand: number; // Manager's physical cash in hand
+    pendingResetRequest?: MonthlySummary | null;
   };
 }
+
+export interface MonthlySummary {
+  id: string;
+  month: string; // YYYY-MM
+  totalBazaarExpense: number;
+  totalMealsCount: number;
+  finalMealRate: number;
+  memberSummaries: {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    totalMeals: number;
+    mealCost: number;
+    totalDeposits: number;
+    endingBalance: number;
+    carryForwardToNextMonth: number;
+  }[];
+  status: 'pending_approval' | 'archived';
+  initiatedBy: string;
+  initiatedAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+}
+

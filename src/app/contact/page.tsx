@@ -46,27 +46,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
-      {/* Navbar */}
-      <nav className="bg-[#0f0f0f]/95 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-40 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 bg-emerald-600 rounded-md flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:bg-emerald-500 transition-colors">
-              P
-            </div>
-            <span className="font-display font-extrabold text-sm tracking-tight text-zinc-100">
-              Power Point Familia
-            </span>
-          </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-zinc-300 hover:text-zinc-100 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Home
-          </Link>
-        </div>
-      </nav>
-
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold rounded-full mb-4">
@@ -225,13 +204,6 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-[#09090b] border-t border-zinc-800/85 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xs text-zinc-500 font-mono">© 2026 Power Point Familia. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }

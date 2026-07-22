@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { MongoClient } from 'mongodb';
-import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest } from '../types';
+import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest, MonthlySummary } from '../types';
 
 export interface DatabaseSchema {
   users: (User & { passwordHash: string })[];
@@ -17,6 +17,7 @@ export interface DatabaseSchema {
   sharedBills: SharedBill[];
   memberBillPayments: MemberBillPayment[];
   refundRequests: RefundRequest[];
+  monthlySummaries: MonthlySummary[];
   settings: SystemSettings;
 }
 
@@ -122,6 +123,7 @@ export async function syncToMongo(data: DatabaseSchema): Promise<void> {
     await syncCollection('sharedBills', data.sharedBills || []);
     await syncCollection('memberBillPayments', data.memberBillPayments || []);
     await syncCollection('refundRequests', data.refundRequests || []);
+    await syncCollection('monthlySummaries', data.monthlySummaries || []);
     await syncSettings(data.settings);
     console.log('Successfully synchronized database changes to MongoDB.');
   } catch (error) {
@@ -145,6 +147,7 @@ export async function initMongoConnection(): Promise<void> {
     const mongoSharedBills = await db.collection('sharedBills').find({}).toArray();
     const mongoMemberBillPayments = await db.collection('memberBillPayments').find({}).toArray();
     const mongoRefundRequests = await db.collection('refundRequests').find({}).toArray();
+    const mongoMonthlySummaries = await db.collection('monthlySummaries').find({}).toArray();
     const mongoSettingsList = await db.collection('settings').find({}).toArray();
 
     // Map _id of MongoDB to clean output, removing Mongo's internal ObjectId from the returned data
@@ -162,6 +165,7 @@ export async function initMongoConnection(): Promise<void> {
     const sharedBills = sanitizeDocs(mongoSharedBills) as SharedBill[];
     const memberBillPayments = sanitizeDocs(mongoMemberBillPayments) as MemberBillPayment[];
     const refundRequests = sanitizeDocs(mongoRefundRequests) as RefundRequest[];
+    const monthlySummaries = sanitizeDocs(mongoMonthlySummaries) as MonthlySummary[];
     
     let settings = DEFAULT_SETTINGS;
     if (mongoSettingsList.length > 0) {
@@ -187,6 +191,7 @@ export async function initMongoConnection(): Promise<void> {
         sharedBills,
         memberBillPayments,
         refundRequests,
+        monthlySummaries,
         settings
       };
       console.log(`Loaded ${users.length} users, ${menus.length} menus, ${records.length} records, ${deposits.length} deposits from MongoDB.`);
@@ -428,6 +433,7 @@ export function initDb(): DatabaseSchema {
       },
     ],
     memberBillPayments: [],
+    monthlySummaries: [],
     settings: DEFAULT_SETTINGS,
   };
 

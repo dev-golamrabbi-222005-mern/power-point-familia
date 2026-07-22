@@ -11,7 +11,9 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@google/genai": "^2.4.0",
+    "@types/web-push": "^3.6.4",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
@@ -20,7 +22,8 @@
     "motion": "^12.23.24",
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

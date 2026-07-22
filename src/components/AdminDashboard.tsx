@@ -60,9 +60,54 @@ export default function AdminDashboard({ user, token, mealRate, onRefreshSetting
     } catch (e) {}
   };
 
+  const [monthlySummaries, setMonthlySummaries] = useState<any[]>([]);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [approveMsg, setApproveMsg] = useState('');
+
+  const fetchMonthEndSummaries = async () => {
+    try {
+      const res = await fetch('/api/month-end', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setMonthlySummaries(await res.json());
+      }
+    } catch (e) {}
+  };
+
+  const handleApproveMonthEnd = async (summaryId: string, action: 'approve' | 'reject') => {
+    if (action === 'approve' && !window.confirm('Are you sure you want to approve and archive this month-end reset? This will store monthly summaries, clear active daily meals/expenses, and carry forward member ending balances as opening balance for the new month.')) return;
+    
+    setApproveLoading(true);
+    setApproveMsg('');
+    try {
+      const res = await fetch('/api/month-end', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ summaryId, action })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setApproveMsg(data.message);
+        fetchMonthEndSummaries();
+        fetchAdminData();
+      } else {
+        alert(data.message || 'Action failed.');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setApproveLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchAdminData();
     fetchPublicCalendar();
+    fetchMonthEndSummaries();
   }, [token]);
 
   useEffect(() => {
@@ -273,6 +318,90 @@ export default function AdminDashboard({ user, token, mealRate, onRefreshSetting
               <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl"><ShieldCheck className="w-6 h-6" /></div>
             </div>
           </div>
+
+          {/* Month-End Reset Approval Card */}
+          {monthlySummaries.some(s => s.status === 'pending_approval') && (
+            <div className="bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-purple-600/10 border-2 border-amber-500/30 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-amber-500/20 rounded-xl">
+                    <ShieldAlert className="w-6 h-6 text-amber-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-lg text-zinc-100">Month-End Reset Request Pending Approval</h3>
+                    <p className="text-xs text-zinc-400">Initiated by Manager. Review the final month-end calculations before archiving.</p>
+                  </div>
+                </div>
+              </div>
+
+              {monthlySummaries.filter(s => s.status === 'pending_approval').map(summary => (
+                <div key={summary.id} className="bg-zinc-900/90 border border-zinc-800 rounded-xl p-4 space-y-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div className="p-3 bg-zinc-800/50 rounded-lg">
+                      <p className="text-[10px] text-zinc-400 font-bold uppercase">Month</p>
+                      <p className="text-sm font-black text-zinc-100">{summary.month}</p>
+                    </div>
+                    <div className="p-3 bg-zinc-800/50 rounded-lg">
+                      <p className="text-[10px] text-zinc-400 font-bold uppercase">Total Bazaar Expense</p>
+                      <p className="text-sm font-black text-amber-400">{summary.totalBazaarExpense}৳</p>
+                    </div>
+                    <div className="p-3 bg-zinc-800/50 rounded-lg">
+                      <p className="text-[10px] text-zinc-400 font-bold uppercase">Total Consumed Meals</p>
+                      <p className="text-sm font-black text-purple-400">{summary.totalMealsCount} Plates</p>
+                    </div>
+                    <div className="p-3 bg-zinc-800/50 rounded-lg">
+                      <p className="text-[10px] text-zinc-400 font-bold uppercase">Final Live Meal Rate</p>
+                      <p className="text-sm font-black text-emerald-400">{summary.finalMealRate}৳</p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-zinc-800/80 text-zinc-400 uppercase text-[9px] font-bold">
+                        <tr>
+                          <th className="p-2">Member</th>
+                          <th className="p-2">Meals</th>
+                          <th className="p-2">Meal Cost</th>
+                          <th className="p-2">Deposits</th>
+                          <th className="p-2 text-right">Carry Forward Opening Balance</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800">
+                        {summary.memberSummaries.map((m: any) => (
+                          <tr key={m.userId} className="hover:bg-zinc-800/30">
+                            <td className="p-2 font-bold text-zinc-200">{m.userName}</td>
+                            <td className="p-2 text-zinc-300">{m.totalMeals}</td>
+                            <td className="p-2 text-red-400 font-semibold">{m.mealCost}৳</td>
+                            <td className="p-2 text-emerald-400 font-semibold">{m.totalDeposits}৳</td>
+                            <td className={`p-2 text-right font-black ${m.carryForwardToNextMonth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {m.carryForwardToNextMonth >= 0 ? `+${m.carryForwardToNextMonth}৳ (Refund)` : `${m.carryForwardToNextMonth}৳ (Due)`}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      onClick={() => handleApproveMonthEnd(summary.id, 'reject')}
+                      disabled={approveLoading}
+                      className="px-4 py-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 text-xs font-bold rounded-lg transition-all cursor-pointer"
+                    >
+                      Reject Request
+                    </button>
+                    <button
+                      onClick={() => handleApproveMonthEnd(summary.id, 'approve')}
+                      disabled={approveLoading}
+                      className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 text-xs font-black rounded-lg transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Approve & Archive Month-End
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Global Settings */}

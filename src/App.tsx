@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { User, MealMenu, DashboardStats } from './types';
-import Hero from './components/Hero';
-import AuthModal from './components/AuthModal';
-import DashboardLayout from './components/DashboardLayout';
-import GuestDashboard from './components/GuestDashboard';
-import MemberDashboard from './components/MemberDashboard';
-import ManagerDashboard from './components/ManagerDashboard';
-import AdminDashboard from './components/AdminDashboard';
-import { Utensils, Shield, KeyRound, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { User, MealMenu, DashboardStats } from "./types";
+import Hero from "./components/Hero";
+import AuthModal from "./components/AuthModal";
+import DashboardLayout from "./components/DashboardLayout";
+import GuestDashboard from "./components/GuestDashboard";
+import MemberDashboard from "./components/MemberDashboard";
+import ManagerDashboard from "./components/ManagerDashboard";
+import AdminDashboard from "./components/AdminDashboard";
+import { Utensils, Shield, KeyRound, Sparkles } from "lucide-react";
+import { Logo } from "./components/Logo";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  
+
   // App-wide data state
   const [menus, setMenus] = useState<MealMenu[]>([]);
   const [mealRate, setMealRate] = useState<number>(45);
@@ -21,32 +22,36 @@ export default function App() {
 
   // Modal triggers
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
+  const [authTab, setAuthTab] = useState<"login" | "register">("login");
 
   // Load user session from local storage on startup
   useEffect(() => {
-    const storedToken = localStorage.getItem('familia_token');
-    const storedUser = localStorage.getItem('familia_user');
+    const storedToken = localStorage.getItem("familia_token");
+    const storedUser = localStorage.getItem("familia_user");
 
     const verifySession = async () => {
       if (storedToken && storedUser) {
         try {
-          const response = await fetch('/api/auth/me', {
-            headers: { 'Authorization': `Bearer ${storedToken}` }
+          const response = await fetch("/api/auth/me", {
+            headers: { Authorization: `Bearer ${storedToken}` },
           });
           const text = await response.text();
           let data;
-          try { data = JSON.parse(text); } catch { data = {}; }
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = {};
+          }
           if (response.ok && data.user) {
             setUser(data.user);
             setToken(storedToken);
           } else {
             // Token expired or invalid
-            localStorage.removeItem('familia_token');
-            localStorage.removeItem('familia_user');
+            localStorage.removeItem("familia_token");
+            localStorage.removeItem("familia_user");
           }
         } catch (err) {
-          console.error('Session validation error', err);
+          console.error("Session validation error", err);
         }
       }
       setAppLoading(false);
@@ -62,8 +67,8 @@ export default function App() {
 
     try {
       // 1. Menus
-      const menusRes = await fetch('/api/menu', {
-        headers: { 'Authorization': `Bearer ${bearerToken}` }
+      const menusRes = await fetch("/api/menu", {
+        headers: { Authorization: `Bearer ${bearerToken}` },
       });
       if (menusRes.ok) {
         const menusData = await menusRes.json();
@@ -71,8 +76,8 @@ export default function App() {
       }
 
       // 2. Meal settings rate
-      const settingsRes = await fetch('/api/settings', {
-        headers: { 'Authorization': `Bearer ${bearerToken}` }
+      const settingsRes = await fetch("/api/settings", {
+        headers: { Authorization: `Bearer ${bearerToken}` },
       });
       if (settingsRes.ok) {
         const settingsData = await settingsRes.json();
@@ -80,15 +85,15 @@ export default function App() {
       }
 
       // 3. User & System aggregates
-      const statsRes = await fetch('/api/dashboard/stats', {
-        headers: { 'Authorization': `Bearer ${bearerToken}` }
+      const statsRes = await fetch("/api/dashboard/stats", {
+        headers: { Authorization: `Bearer ${bearerToken}` },
       });
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setStats(statsData);
       }
     } catch (error) {
-      console.error('Global data fetch error', error);
+      console.error("Global data fetch error", error);
     }
   };
 
@@ -101,8 +106,8 @@ export default function App() {
   const handleAuthSuccess = (loggedUser: User, loggedToken: string) => {
     setUser(loggedUser);
     setToken(loggedToken);
-    localStorage.setItem('familia_token', loggedToken);
-    localStorage.setItem('familia_user', JSON.stringify(loggedUser));
+    localStorage.setItem("familia_token", loggedToken);
+    localStorage.setItem("familia_user", JSON.stringify(loggedUser));
     fetchGlobalData(loggedToken);
   };
 
@@ -110,29 +115,33 @@ export default function App() {
     setUser(null);
     setToken(null);
     setStats(null);
-    localStorage.removeItem('familia_token');
-    localStorage.removeItem('familia_user');
+    localStorage.removeItem("familia_token");
+    localStorage.removeItem("familia_user");
   };
 
   const handleProfileUpdated = (updatedUser: User) => {
     setUser(updatedUser);
-    localStorage.setItem('familia_user', JSON.stringify(updatedUser));
+    localStorage.setItem("familia_user", JSON.stringify(updatedUser));
   };
 
   const handleDemoLogin = async (email: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: 'password123' })
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password: "password123" }),
       });
       const text = await response.text();
       let data;
-      try { data = JSON.parse(text); } catch { data = {}; }
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = {};
+      }
       if (response.ok && data.token) {
         handleAuthSuccess(data.user, data.token);
       } else {
-        alert(data.message || 'Login failed. Server may not be running.');
+        alert(data.message || "Login failed. Server may not be running.");
       }
     } catch (err) {
       console.error(err);
@@ -144,7 +153,7 @@ export default function App() {
     if (!user || !token) return null;
 
     switch (user.role) {
-      case 'admin':
+      case "admin":
         return (
           <AdminDashboard
             user={user}
@@ -153,7 +162,7 @@ export default function App() {
             onRefreshSettings={() => fetchGlobalData()}
           />
         );
-      case 'manager':
+      case "manager":
         return (
           <ManagerDashboard
             user={user}
@@ -163,7 +172,7 @@ export default function App() {
             onRefreshMenus={() => fetchGlobalData()}
           />
         );
-      case 'member':
+      case "member":
         return (
           <MemberDashboard
             user={user}
@@ -173,7 +182,7 @@ export default function App() {
             onRefreshStats={() => fetchGlobalData()}
           />
         );
-      case 'user':
+      case "user":
       default:
         return (
           <GuestDashboard
@@ -189,31 +198,183 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center">
         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="font-display font-bold text-zinc-100">Booting Power Point Familia...</p>
+        <p className="font-display font-bold text-zinc-100">
+          Booting Power Point Familia...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col justify-between selection:bg-emerald-500/20 selection:text-emerald-300">
-      
       {/* Brand Header for Landing page */}
       {!user && (
         <nav className="bg-[#0f0f0f]/95 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-40 py-4 shadow-xl shadow-black/15">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-emerald-600 rounded-md flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                P
-              </div>
-              <div>
-                <span className="font-display font-extrabold text-sm tracking-tight text-zinc-100 block leading-tight">
-                  Power Point Familia
-                </span>
-                <span className="text-[9px] text-zinc-500 font-mono block">
-                  MEAL SYSTEMS CO.
-                </span>
-              </div>
-            </div>
+              {/* Could be used this logo as a Banner  */}
+              {/* <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 500 500"
+                width="100%"
+                height="100%"
+              >
+                <defs>
+                  <linearGradient
+                    id="bgGrad"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#0F172A" />
+                    <stop offset="100%" stop-color="#1E293B" />
+                  </linearGradient>
+
+                  <linearGradient
+                    id="primaryGrad"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#38BDF8" />
+                    <stop offset="100%" stop-color="#0284C7" />
+                  </linearGradient>
+
+                  <linearGradient
+                    id="accentGrad"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#FB923C" />
+                    <stop offset="100%" stop-color="#EA580C" />
+                  </linearGradient>
+
+                  <filter
+                    id="dropShadow"
+                    x="-10%"
+                    y="-10%"
+                    width="120%"
+                    height="120%"
+                  >
+                    <feDropShadow
+                      dx="0"
+                      dy="8"
+                      stdDeviation="6"
+                      flood-color="#000000"
+                      flood-opacity="0.3"
+                    />
+                  </filter>
+                </defs>
+
+                <rect width="500" height="500" rx="80" fill="url(#bgGrad)" />
+
+                <circle
+                  cx="250"
+                  cy="210"
+                  r="140"
+                  fill="none"
+                  stroke="#334155"
+                  stroke-width="4"
+                  stroke-dasharray="8 8"
+                />
+
+                <g filter="url(#dropShadow)">
+                  <path
+                    d="M 140 180 L 250 80 L 360 180"
+                    fill="none"
+                    stroke="url(#primaryGrad)"
+                    stroke-width="18"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+
+                  <circle
+                    cx="250"
+                    cy="225"
+                    r="65"
+                    fill="#0F172A"
+                    stroke="url(#primaryGrad)"
+                    stroke-width="12"
+                  />
+                  <circle
+                    cx="250"
+                    cy="225"
+                    r="45"
+                    fill="none"
+                    stroke="#334155"
+                    stroke-width="3"
+                    stroke-dasharray="4 4"
+                  />
+
+                  <path
+                    d="M 230 205 V 230 M 224 205 V 218 M 236 205 V 218"
+                    stroke="url(#accentGrad)"
+                    stroke-width="4"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M 270 230 V 215 A 8 10 0 0 0 270 198 A 8 10 0 0 0 270 215"
+                    fill="url(#accentGrad)"
+                    stroke="url(#accentGrad)"
+                    stroke-width="2"
+                  />
+
+                  <path
+                    d="M 250 60 L 242 82 L 258 78 Z"
+                    fill="url(#accentGrad)"
+                  />
+                </g>
+
+                <g text-anchor="middle">
+                  <rect
+                    x="180"
+                    y="320"
+                    width="140"
+                    height="36"
+                    rx="18"
+                    fill="url(#accentGrad)"
+                  />
+                  <text
+                    x="250"
+                    y="344"
+                    font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                    font-size="18"
+                    font-weight="900"
+                    fill="#FFFFFF"
+                    letter-spacing="4"
+                  >
+                    PPF
+                  </text>
+
+                  <text
+                    x="250"
+                    y="395"
+                    font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                    font-size="24"
+                    font-weight="800"
+                    fill="#F8FAFC"
+                    letter-spacing="2"
+                  >
+                    POWER POINT
+                  </text>
+                  <text
+                    x="250"
+                    y="425"
+                    font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                    font-size="16"
+                    font-weight="600"
+                    fill="#38BDF8"
+                    letter-spacing="6"
+                  >
+                    FAMILIA
+                  </text>
+                </g>
+              </svg> */}
+              <Logo/>
+   
 
             <div className="flex items-center gap-3">
               <a
@@ -231,14 +392,20 @@ export default function App() {
               <div className="flex gap-2 ml-2">
                 <button
                   id="header-login"
-                  onClick={() => { setAuthTab('login'); setIsAuthOpen(true); }}
+                  onClick={() => {
+                    setAuthTab("login");
+                    setIsAuthOpen(true);
+                  }}
                   className="px-4 py-2 hover:bg-zinc-850 text-zinc-200 text-xs font-bold rounded-xl transition-all border border-zinc-800 shadow-3xs cursor-pointer"
                 >
                   Sign In
                 </button>
                 <button
                   id="header-register"
-                  onClick={() => { setAuthTab('register'); setIsAuthOpen(true); }}
+                  onClick={() => {
+                    setAuthTab("register");
+                    setIsAuthOpen(true);
+                  }}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer"
                 >
                   Register
@@ -263,8 +430,14 @@ export default function App() {
           </DashboardLayout>
         ) : (
           <Hero
-            onLoginClick={() => { setAuthTab('login'); setIsAuthOpen(true); }}
-            onRegisterClick={() => { setAuthTab('register'); setIsAuthOpen(true); }}
+            onLoginClick={() => {
+              setAuthTab("login");
+              setIsAuthOpen(true);
+            }}
+            onRegisterClick={() => {
+              setAuthTab("register");
+              setIsAuthOpen(true);
+            }}
             onDemoLogin={handleDemoLogin}
             menus={menus}
             mealRate={mealRate}
@@ -284,28 +457,31 @@ export default function App() {
       {!user && (
         <footer className="bg-[#09090b] border-t border-zinc-800/85 py-10 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-emerald-600 rounded flex items-center justify-center text-white font-black text-xs">
-                P
-              </div>
-              <span className="font-display font-bold text-zinc-100 text-xs">Power Point Familia</span>
-            </div>
-            
+            <div className="flex items-center">
+                      <Logo />
+                    </div>
+
             <div className="flex items-center gap-6">
-              <a href="/about" className="text-[11px] text-zinc-500 hover:text-zinc-300 font-medium transition-colors">
+              <a
+                href="/about"
+                className="text-[11px] text-zinc-500 hover:text-zinc-300 font-medium transition-colors"
+              >
                 About
               </a>
-              <a href="/contact" className="text-[11px] text-zinc-500 hover:text-zinc-300 font-medium transition-colors">
+              <a
+                href="/contact"
+                className="text-[11px] text-zinc-500 hover:text-zinc-300 font-medium transition-colors"
+              >
                 Contact
               </a>
               <p className="text-[11px] text-zinc-500 font-mono text-center md:text-right">
-                Secured with JWT & PBKDF2. Powered by Next.js, TypeScript & MongoDB.
+                Secured with JWT & PBKDF2. Powered by Next.js, TypeScript &
+                MongoDB.
               </p>
             </div>
           </div>
         </footer>
       )}
-
     </div>
   );
 }

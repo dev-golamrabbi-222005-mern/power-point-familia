@@ -4,11 +4,13 @@ import { Clock, ShieldAlert, Sparkles, CheckCircle2, ArrowRight } from 'lucide-r
 
 interface GuestDashboardProps {
   user: User;
-  stats: DashboardStats | null;
-  onDemoSwitch: (email: string) => void;
+  stats?: DashboardStats | null;
+  token?: string;
+  onRefreshUser?: () => void;
+  onDemoSwitch?: (email: string) => void;
 }
 
-export default function GuestDashboard({ user, stats, onDemoSwitch }: GuestDashboardProps) {
+export default function GuestDashboard({ user, stats, token, onRefreshUser, onDemoSwitch }: GuestDashboardProps) {
   const currentStatus = user.status;
 
   return (

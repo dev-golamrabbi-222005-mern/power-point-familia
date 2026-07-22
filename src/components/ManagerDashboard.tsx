@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, MealMenu, MealRecord, Deposit, DashboardStats, BazaarAssignment, BazaarExpense, RefundRequest } from '../types';
-import { ChefHat, Plus, Trash2, Edit3, ClipboardList, Check, X, Calendar, CalendarDays, DollarSign, Users, RefreshCw, AlertCircle, TrendingUp, HelpCircle, ShoppingCart, CalendarRange, AlertTriangle, Bell, Send, Eye, UserCheck, CheckCircle2, Search, UserX, Sun, Moon, Image as ImageIcon, Receipt, Utensils } from 'lucide-react';
+import { ChefHat, Plus, Trash2, Edit3, ClipboardList, Check, X, Calendar, CalendarDays, DollarSign, Users, RefreshCw, AlertCircle, TrendingUp, HelpCircle, ShoppingCart, CalendarRange, AlertTriangle, Bell, Send, Eye, UserCheck, CheckCircle2, Search, UserX, Sun, Moon, Image as ImageIcon, Receipt, Utensils, Wallet } from 'lucide-react';
 
 interface ManagerDashboardProps {
   user: User;
@@ -355,6 +355,32 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
     }
   };
 
+  const [initiateResetLoading, setInitiateResetLoading] = useState(false);
+  const [resetStatusMsg, setResetStatusMsg] = useState('');
+
+  const handleInitiateMonthEnd = async () => {
+    if (!window.confirm('Are you sure you want to initiate Month-End Reset? This will calculate total month bazaar expenses, live meal rate, and carry-forward balances, sending the reset request to Admin for approval.')) return;
+    setInitiateResetLoading(true);
+    setResetStatusMsg('');
+    try {
+      const res = await fetch('/api/month-end', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResetStatusMsg(data.message);
+        fetchManagerData();
+      } else {
+        alert(data.message || 'Failed to initiate month-end reset.');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Error occurred.');
+    } finally {
+      setInitiateResetLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchManagerData();
     fetchBazaarData();
@@ -704,6 +730,35 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       
+      {/* Permanent Month-End Reset Control Banner (For Testing & Operations) */}
+      <div className="bg-gradient-to-r from-purple-900/30 via-zinc-900 to-amber-900/20 border border-purple-500/30 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-4 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-purple-500/20 rounded-xl">
+            <RefreshCw className="w-6 h-6 text-purple-400" />
+          </div>
+          <div>
+            <h4 className="font-display font-bold text-sm text-zinc-100 flex items-center gap-2">
+              Month-End Reset & Carry-Forward Engine
+              <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">Manager Action</span>
+            </h4>
+            <p className="text-xs text-zinc-400">
+              {managerStats?.pendingResetRequest
+                ? '⚠️ A Month-End Reset request is currently PENDING Admin approval.'
+                : 'Calculate total month expenses, live meal rate, member carry-forward balances, and send request to Admin.'}
+            </p>
+            {resetStatusMsg && <p className="text-xs text-emerald-400 font-bold mt-1">{resetStatusMsg}</p>}
+          </div>
+        </div>
+        <button
+          onClick={handleInitiateMonthEnd}
+          disabled={initiateResetLoading || !!managerStats?.pendingResetRequest}
+          className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${initiateResetLoading ? 'animate-spin' : ''}`} />
+          {managerStats?.pendingResetRequest ? 'Reset Request Pending Approval' : 'Initiate Month-End Reset'}
+        </button>
+      </div>
+
       {/* Live Rate Banner + Auto-Book Toggle */}
       <div className="bg-gradient-to-r from-emerald-600/20 via-emerald-500/10 to-teal-600/20 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -839,14 +894,14 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
       {/* === OVERVIEW TAB === */}
       {activeTab === 'overview' && (
         <>
-          {/* System Stats */}
+          {/* System Stats / Manager KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-gradient-to-br from-emerald-600 to-teal-700 border border-emerald-500/20 rounded-2xl p-5 shadow-lg text-white">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-[10px] font-bold text-emerald-100 uppercase tracking-wider font-mono">System Pool Balance</p>
-                  <h3 className="text-2xl font-black text-white mt-1">{managerStats ? `${managerStats.totalSystemBalance.toFixed(0)}৳` : '--'}</h3>
-                  <p className="text-[10px] text-emerald-200 font-semibold mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> System in active solvency</p>
+                  <p className="text-[10px] font-bold text-emerald-100 uppercase tracking-wider font-mono">Total Cash in Hand</p>
+                  <h3 className="text-2xl font-black text-white mt-1">{managerStats ? `${(managerStats.totalCashInHand ?? 0).toFixed(0)}৳` : '--'}</h3>
+                  <p className="text-[10px] text-emerald-200 font-semibold mt-1 flex items-center gap-1"><Wallet className="w-3 h-3" /> Physical Cash held by Manager</p>
                 </div>
                 <span className="p-2.5 bg-emerald-700 text-emerald-100 rounded-xl"><DollarSign className="w-5 h-5" /></span>
               </div>
@@ -854,20 +909,20 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
 
             <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">System Deposits</p>
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Total Collected Fund</p>
                 <h3 className="text-2xl font-black text-zinc-100 mt-1">{managerStats ? `${managerStats.totalSystemDeposits}৳` : '--'}</h3>
-                <span className="text-[10px] text-zinc-400 mt-1 block">Accumulated member topups</span>
+                <span className="text-[10px] text-zinc-400 mt-1 block">Sum of all approved member deposits</span>
               </div>
               <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl"><ClipboardList className="w-6 h-6" /></div>
             </div>
 
             <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Accumulated Meals</p>
-                <h3 className="text-2xl font-black text-zinc-100 mt-1">{managerStats ? `${managerStats.totalSystemMealsCount} Plates` : '--'}</h3>
-                <span className="text-[10px] text-zinc-400 mt-1 block">Total meals delivered to members</span>
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Total Expense So Far</p>
+                <h3 className="text-2xl font-black text-zinc-100 mt-1">{managerStats ? `${(managerStats.totalBazaarExpenses ?? 0).toFixed(0)}৳` : '--'}</h3>
+                <span className="text-[10px] text-zinc-400 mt-1 block">Sum of all approved bazaar expenses</span>
               </div>
-              <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl"><ChefHat className="w-6 h-6" /></div>
+              <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl"><ShoppingCart className="w-6 h-6" /></div>
             </div>
 
             <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">

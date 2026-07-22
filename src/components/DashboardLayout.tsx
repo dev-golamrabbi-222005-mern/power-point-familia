@@ -4,10 +4,10 @@ import { User, DashboardStats } from '../types';
 
 interface DashboardLayoutProps {
   user: User;
-  token: string;
-  stats: DashboardStats | null;
+  token?: string;
+  stats?: DashboardStats | null;
   onLogout: () => void;
-  onProfileUpdated: (updatedUser: User) => void;
+  onProfileUpdated?: (updatedUser: User) => void;
   children: React.ReactNode;
 }
 
@@ -72,74 +72,6 @@ export default function DashboardLayout({ user, token, stats, onLogout, onProfil
 
   return (
     <div id="dashboard-wrapper" className="min-h-screen bg-[#0a0a0a] text-zinc-100 flex flex-col">
-      
-      {/* Top Navbar */}
-      <header className="bg-[#0f0f0f]/95 border-b border-zinc-800 sticky top-0 z-30 shadow-lg shadow-black/10 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            
-            {/* Logo and Brand */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                P
-              </div>
-              <div>
-                <span className="font-display font-black text-lg tracking-tight text-zinc-100 block leading-tight">
-                  Power Point Familia
-                </span>
-                <span className="text-[10px] text-zinc-500 font-mono font-medium block">
-                  MEAL SYSTEM
-                </span>
-              </div>
-            </div>
-
-            {/* Desktop Navigation Controls */}
-            <div className="hidden md:flex items-center gap-4">
-              
-              {/* Role badge */}
-              <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${currentRoleColor.bg} ${currentRoleColor.text}`}>
-                <RoleIcon className="w-4 h-4 shrink-0" />
-                <span>{currentRoleColor.label}</span>
-              </div>
-
-              {/* Profile setup toggler */}
-              <button
-                id="btn-toggle-profile"
-                onClick={() => setShowProfileSettings(!showProfileSettings)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all cursor-pointer ${
-                  showProfileSettings 
-                    ? 'bg-zinc-800 text-zinc-100 border-zinc-700' 
-                    : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-850'
-                }`}
-              >
-                <Settings className="w-4 h-4" />
-                <span>Profile Settings</span>
-              </button>
-
-              {/* Logout button */}
-              <button
-                id="btn-logout"
-                onClick={onLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-sm font-semibold rounded-lg border border-rose-500/25 transition-colors cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
-            </div>
-
-            {/* Mobile menu trigger */}
-            <div className="flex items-center md:hidden">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg cursor-pointer"
-              >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </header>
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
