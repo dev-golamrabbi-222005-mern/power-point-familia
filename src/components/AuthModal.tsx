@@ -38,10 +38,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialTab = 'lo
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = {}; }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Authentication failed. Please try again.');
+        throw new Error(data.message || 'Authentication failed. Server may not be responding.');
       }
 
       setSuccessMsg(data.message || 'Success!');

@@ -52,7 +52,9 @@ export default function DashboardLayout({ user, token, stats, onLogout, onProfil
         })
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = {}; }
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to update profile.');

@@ -1,44 +1,14 @@
 {
   "users": [
     {
-      "id": "user-admin",
-      "email": "admin@familia.com",
-      "name": "System Admin",
-      "phone": "01712345678",
-      "role": "admin",
-      "status": "approved",
-      "createdAt": "2026-07-21T13:10:13.587Z",
-      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
-    },
-    {
       "id": "user-developer",
       "email": "g.rabbi2005.555@gmail.com",
       "name": "Rabbi Developer",
       "phone": "01812345678",
       "role": "admin",
       "status": "approved",
-      "createdAt": "2026-07-21T13:10:13.587Z",
-      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
-    },
-    {
-      "id": "user-manager",
-      "email": "manager@familia.com",
-      "name": "Rahim Manager",
-      "phone": "01912345678",
-      "role": "manager",
-      "status": "approved",
-      "createdAt": "2026-07-21T13:10:13.587Z",
-      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
-    },
-    {
-      "id": "user-member",
-      "email": "member@familia.com",
-      "name": "Karim Member",
-      "phone": "01512345678",
-      "role": "member",
-      "status": "approved",
-      "createdAt": "2026-07-21T13:10:13.587Z",
-      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
+      "createdAt": "2026-07-21T12:35:19.562Z",
+      "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
     },
     {
       "id": "user-guest",
@@ -47,8 +17,39 @@
       "phone": "01612345678",
       "role": "user",
       "status": "pending",
-      "createdAt": "2026-07-21T13:10:13.587Z",
-      "passwordHash": "$2b$10$rKxZKpU1PhoBRVsPtr2Jq.V3TjuTNnVjYOxluD2ObzqIYKtxX91gm"
+      "createdAt": "2026-07-21T12:35:19.562Z",
+      "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
+    },
+    {
+      "id": "user-admin",
+      "email": "admin@familia.com",
+      "name": "System Admin",
+      "phone": "01712345678",
+      "role": "admin",
+      "status": "approved",
+      "createdAt": "2026-07-21T12:35:19.562Z",
+      "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
+    },
+    {
+      "id": "user-member",
+      "email": "member@familia.com",
+      "name": "Karim Member",
+      "phone": "01512345678",
+      "role": "member",
+      "status": "approved",
+      "createdAt": "2026-07-21T12:35:19.562Z",
+      "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C",
+      "autoBookDisabled": false
+    },
+    {
+      "id": "user-manager",
+      "email": "manager@familia.com",
+      "name": "Rahim Manager",
+      "phone": "01912345678",
+      "role": "manager",
+      "status": "approved",
+      "createdAt": "2026-07-21T12:35:19.562Z",
+      "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
     }
   ],
   "menus": [
@@ -74,47 +75,49 @@
         "Dal Makhani"
       ],
       "estimatedCost": 50
+    },
+    {
+      "id": "menu-1784711193268",
+      "date": "2026-07-22",
+      "mealType": "lunch",
+      "items": [
+        "Test Auto-Book Meal",
+        "Rice",
+        "Curry"
+      ],
+      "estimatedCost": 50
     }
   ],
   "records": [
     {
-      "id": "rec-1",
+      "id": "rec-1784710631975-741",
       "userId": "user-member",
       "date": "2026-07-21",
       "mealType": "lunch",
       "count": 1
     },
     {
-      "id": "rec-2",
+      "id": "rec-1784711143782-518",
       "userId": "user-member",
       "date": "2026-07-21",
       "mealType": "dinner",
       "count": 1
     }
   ],
-  "deposits": [
-    {
-      "id": "dep-1",
-      "userId": "user-member",
-      "amount": 1500,
-      "date": "2026-07-21",
-      "paymentMethod": "bKash",
-      "transactionId": "TRX99887766",
-      "status": "approved",
-      "remarks": "Monthly advanced meal fee"
-    },
-    {
-      "id": "dep-2",
-      "userId": "user-member",
-      "amount": 500,
-      "date": "2026-07-21",
-      "paymentMethod": "Cash",
-      "transactionId": "CASH-001",
-      "status": "pending",
-      "remarks": "Extra money for dinner party"
-    }
-  ],
+  "deposits": [],
+  "bazaarAssignments": [],
+  "bazaarExpenses": [],
+  "bazaarPairs": [],
+  "weeklyPayments": [],
+  "contactMessages": [],
+  "sharedBills": [],
+  "memberBillPayments": [],
+  "refundRequests": [],
   "settings": {
-    "mealRate": 45
+    "mealRate": 45,
+    "weeklyPayment": 500,
+    "initialWeekPayment": 1000,
+    "monthlyFlatRate": 2500,
+    "startWeekDate": "2026-07-22"
   }
 }

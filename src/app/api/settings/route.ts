@@ -18,26 +18,42 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { error } = authenticate(req, ['admin']);
+    const { error, user } = authenticate(req, ['admin', 'manager']);
     if (error) return error;
 
-    const { mealRate } = await req.json();
-
-    if (mealRate === undefined || Number(mealRate) <= 0) {
-      return NextResponse.json(
-        { message: 'A valid meal rate greater than 0 is required.' },
-        { status: 400 }
-      );
-    }
+    const body = await req.json();
+    const { mealRate, weeklyPayment, initialWeekPayment, monthlyFlatRate, startWeekDate, autoBookMeals, bazaarRotationIndex } = body;
 
     await ensureDbInit();
     const db = getDb();
-    db.settings = { mealRate: Number(mealRate) };
+    
+    // Update only the provided settings fields
+    if (mealRate !== undefined && Number(mealRate) > 0) {
+      db.settings.mealRate = Number(mealRate);
+    }
+    if (weeklyPayment !== undefined && Number(weeklyPayment) > 0) {
+      db.settings.weeklyPayment = Number(weeklyPayment);
+    }
+    if (initialWeekPayment !== undefined && Number(initialWeekPayment) > 0) {
+      db.settings.initialWeekPayment = Number(initialWeekPayment);
+    }
+    if (monthlyFlatRate !== undefined && Number(monthlyFlatRate) > 0) {
+      db.settings.monthlyFlatRate = Number(monthlyFlatRate);
+    }
+    if (startWeekDate !== undefined) {
+      db.settings.startWeekDate = startWeekDate;
+    }
+    if (autoBookMeals !== undefined) {
+      db.settings.autoBookMeals = Boolean(autoBookMeals);
+    }
+    if (bazaarRotationIndex !== undefined) {
+      db.settings.currentPairIndex = Number(bazaarRotationIndex);
+    }
     saveDb(db);
 
     return NextResponse.json({
       settings: db.settings,
-      message: 'Meal rate settings updated successfully.'
+      message: 'System settings updated successfully.'
     });
   } catch (error) {
     console.error('Settings update error', error);

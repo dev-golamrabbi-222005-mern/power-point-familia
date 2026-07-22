@@ -1,9 +1,16 @@
 {
-  "/api/auth/login/route": "app/api/auth/login/route.js",
-  "/api/menu/route": "app/api/menu/route.js",
+  "/api/auth/me/route": "app/api/auth/me/route.js",
+  "/api/public/calendar/route": "app/api/public/calendar/route.js",
   "/api/dashboard/stats/route": "app/api/dashboard/stats/route.js",
-  "/api/records/route": "app/api/records/route.js",
+  "/api/bazaar/pairs/route": "app/api/bazaar/pairs/route.js",
+  "/api/settings/auto-book/route": "app/api/settings/auto-book/route.js",
+  "/api/utilities/route": "app/api/utilities/route.js",
+  "/api/menu/route": "app/api/menu/route.js",
+  "/api/public/ledger/route": "app/api/public/ledger/route.js",
+  "/api/bazaar/assign/route": "app/api/bazaar/assign/route.js",
   "/api/settings/route": "app/api/settings/route.js",
+  "/api/records/route": "app/api/records/route.js",
+  "/api/bazaar/expense/route": "app/api/bazaar/expense/route.js",
   "/api/deposits/route": "app/api/deposits/route.js",
   "/page": "app/page.js"
 }
