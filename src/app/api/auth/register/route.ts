@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       status,
       createdAt: new Date().toISOString(),
       passwordHash,
+      bazaarCount: 0,
     };
 
     db.users.push(newUser);

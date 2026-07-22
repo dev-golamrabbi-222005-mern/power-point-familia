@@ -1,4 +1,4 @@
-// File: C:\Users\LOQ\Desktop\MY WORKS Web Dev\power-point-familia\src\app\api\dashboard\stats\route.ts
+// File: /media/kn8/D_Drive/Projects/pp famillia/power-point-familia/src/app/api/dashboard/stats/route.ts
 import * as entry from '../../../../../../src/app/api/dashboard/stats/route.js'
 import type { NextRequest } from 'next/server.js'
 

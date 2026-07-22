@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate } from '@/src/lib/auth.js';
 import { getDb, saveDb, ensureDbInit } from '@/src/lib/db.js';
-import { MealMenu } from '@/src/types';
+import { MealMenu, MealRecord } from '@/src/types';
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const { error } = authenticate(req, ['manager', 'admin']);
     if (error) return error;
 
-    const { id, date, mealType, items, estimatedCost } = await req.json();
+    const { id, date, mealType, items, estimatedCost, skipAutoBook } = await req.json();
 
     if (!date || !mealType || !items || !Array.isArray(items) || estimatedCost === undefined) {
       return NextResponse.json(
@@ -62,6 +62,39 @@ export async function POST(req: NextRequest) {
     };
 
     db.menus.push(newMenu);
+    
+    // Auto-book all approved members if the setting is enabled
+    if (db.settings.autoBookMeals && !skipAutoBook) {
+      const approvedMembers = db.users.filter(u => u.role === 'member' && u.status === 'approved' && !u.autoBookDisabled);
+      let autoBookCount = 0;
+      
+      for (const member of approvedMembers) {
+        // Check if already has a record for this meal slot
+        const existing = db.records.find(
+          r => r.userId === member.id && r.date === date && r.mealType === mealType
+        );
+        if (!existing) {
+          const newRecord: MealRecord = {
+            id: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            userId: member.id,
+            date,
+            mealType,
+            count: 1, // Auto-book 1 meal
+          };
+          db.records.push(newRecord);
+          autoBookCount++;
+        }
+      }
+      
+      saveDb(db);
+      
+      return NextResponse.json({ 
+        menu: newMenu, 
+        message: `Menu created successfully. Auto-booked ${autoBookCount} member(s) for this meal.`,
+        autoBooked: autoBookCount
+      }, { status: 201 });
+    }
+
     saveDb(db);
 
     return NextResponse.json({ menu: newMenu, message: 'Menu created successfully.' }, { status: 201 });

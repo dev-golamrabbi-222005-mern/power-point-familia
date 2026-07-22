@@ -2,20 +2,34 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { MongoClient } from 'mongodb';
-import { User, MealMenu, MealRecord, Deposit, SystemSettings } from '../types';
+import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest } from '../types';
 
 export interface DatabaseSchema {
   users: (User & { passwordHash: string })[];
   menus: MealMenu[];
   records: MealRecord[];
   deposits: Deposit[];
+  bazaarAssignments: BazaarAssignment[];
+  bazaarExpenses: BazaarExpense[];
+  bazaarPairs: BazaarPair[];
+  weeklyPayments: WeeklyPayment[];
+  contactMessages: ContactMessage[];
+  sharedBills: SharedBill[];
+  memberBillPayments: MemberBillPayment[];
+  refundRequests: RefundRequest[];
   settings: SystemSettings;
 }
 
 const DB_FILE = path.join(process.cwd(), 'db.json');
 
 const DEFAULT_SETTINGS: SystemSettings = {
-  mealRate: 45, // Default meal rate of 45 currency units
+  mealRate: 45,
+  weeklyPayment: 500,
+  initialWeekPayment: 1000,
+  monthlyFlatRate: 2500,
+  startWeekDate: new Date().toISOString().split('T')[0],
+  autoBookMeals: true,
+  currentPairIndex: 0,
 };
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://power-point-famila:MhyloARZhkNmRpwU@mrcluster.zsepnby.mongodb.net/?appName=MRcluster';
@@ -100,6 +114,14 @@ export async function syncToMongo(data: DatabaseSchema): Promise<void> {
     await syncCollection('menus', data.menus);
     await syncCollection('records', data.records);
     await syncCollection('deposits', data.deposits);
+    await syncCollection('bazaarAssignments', data.bazaarAssignments || []);
+    await syncCollection('bazaarExpenses', data.bazaarExpenses || []);
+    await syncCollection('bazaarPairs', data.bazaarPairs || []);
+    await syncCollection('weeklyPayments', data.weeklyPayments || []);
+    await syncCollection('contactMessages', data.contactMessages || []);
+    await syncCollection('sharedBills', data.sharedBills || []);
+    await syncCollection('memberBillPayments', data.memberBillPayments || []);
+    await syncCollection('refundRequests', data.refundRequests || []);
     await syncSettings(data.settings);
     console.log('Successfully synchronized database changes to MongoDB.');
   } catch (error) {
@@ -115,6 +137,14 @@ export async function initMongoConnection(): Promise<void> {
     const mongoMenus = await db.collection('menus').find({}).toArray();
     const mongoRecords = await db.collection('records').find({}).toArray();
     const mongoDeposits = await db.collection('deposits').find({}).toArray();
+    const mongoBazaarAssignments = await db.collection('bazaarAssignments').find({}).toArray();
+    const mongoBazaarExpenses = await db.collection('bazaarExpenses').find({}).toArray();
+    const mongoBazaarPairs = await db.collection('bazaarPairs').find({}).toArray();
+    const mongoWeeklyPayments = await db.collection('weeklyPayments').find({}).toArray();
+    const mongoContactMessages = await db.collection('contactMessages').find({}).toArray();
+    const mongoSharedBills = await db.collection('sharedBills').find({}).toArray();
+    const mongoMemberBillPayments = await db.collection('memberBillPayments').find({}).toArray();
+    const mongoRefundRequests = await db.collection('refundRequests').find({}).toArray();
     const mongoSettingsList = await db.collection('settings').find({}).toArray();
 
     // Map _id of MongoDB to clean output, removing Mongo's internal ObjectId from the returned data
@@ -124,6 +154,14 @@ export async function initMongoConnection(): Promise<void> {
     const menus = sanitizeDocs(mongoMenus) as MealMenu[];
     const records = sanitizeDocs(mongoRecords) as MealRecord[];
     const deposits = sanitizeDocs(mongoDeposits) as Deposit[];
+    const bazaarAssignments = sanitizeDocs(mongoBazaarAssignments) as BazaarAssignment[];
+    const bazaarExpenses = sanitizeDocs(mongoBazaarExpenses) as BazaarExpense[];
+    const bazaarPairs = sanitizeDocs(mongoBazaarPairs) as BazaarPair[];
+    const weeklyPayments = sanitizeDocs(mongoWeeklyPayments) as WeeklyPayment[];
+    const contactMessages = sanitizeDocs(mongoContactMessages) as ContactMessage[];
+    const sharedBills = sanitizeDocs(mongoSharedBills) as SharedBill[];
+    const memberBillPayments = sanitizeDocs(mongoMemberBillPayments) as MemberBillPayment[];
+    const refundRequests = sanitizeDocs(mongoRefundRequests) as RefundRequest[];
     
     let settings = DEFAULT_SETTINGS;
     if (mongoSettingsList.length > 0) {
@@ -141,6 +179,14 @@ export async function initMongoConnection(): Promise<void> {
         menus,
         records,
         deposits,
+        bazaarAssignments,
+        bazaarExpenses,
+        bazaarPairs,
+        weeklyPayments,
+        contactMessages,
+        sharedBills,
+        memberBillPayments,
+        refundRequests,
         settings
       };
       console.log(`Loaded ${users.length} users, ${menus.length} menus, ${records.length} records, ${deposits.length} deposits from MongoDB.`);
@@ -204,6 +250,7 @@ export function initDb(): DatabaseSchema {
         status: 'approved',
         createdAt: new Date().toISOString(),
         passwordHash: defaultPasswordHash,
+        bazaarCount: 0,
       },
       {
         id: 'user-developer',
@@ -214,6 +261,7 @@ export function initDb(): DatabaseSchema {
         status: 'approved',
         createdAt: new Date().toISOString(),
         passwordHash: defaultPasswordHash,
+        bazaarCount: 0,
       },
       {
         id: 'user-manager',
@@ -224,6 +272,7 @@ export function initDb(): DatabaseSchema {
         status: 'approved',
         createdAt: new Date().toISOString(),
         passwordHash: defaultPasswordHash,
+        bazaarCount: 0,
       },
       {
         id: 'user-member',
@@ -234,16 +283,18 @@ export function initDb(): DatabaseSchema {
         status: 'approved',
         createdAt: new Date().toISOString(),
         passwordHash: defaultPasswordHash,
+        bazaarCount: 1,
       },
       {
         id: 'user-guest',
         email: 'guest@familia.com',
         name: 'Sajal Guest',
         phone: '01612345678',
-        role: 'user',
         status: 'pending',
+        role: 'user',
         createdAt: new Date().toISOString(),
         passwordHash: defaultPasswordHash,
+        bazaarCount: 0,
       },
     ],
     menus: [
@@ -277,8 +328,7 @@ export function initDb(): DatabaseSchema {
         mealType: 'dinner',
         count: 1,
       },
-    ],
-    deposits: [
+    ],          deposits: [
       {
         id: 'dep-1',
         userId: 'user-member',
@@ -300,6 +350,84 @@ export function initDb(): DatabaseSchema {
         remarks: 'Extra money for dinner party',
       },
     ],
+    bazaarPairs: [],
+    bazaarAssignments: [
+      {
+        id: 'bazaar-1',
+        userId: 'user-member',
+        date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        shoppingList: ['Rice - 5kg', 'Potato - 3kg', 'Onion - 2kg', 'Cooking Oil - 2L'],
+        status: 'pending',
+        bazaarPairId: 'pair-1',
+      },
+      {
+        id: 'bazaar-2',
+        userId: 'user-member',
+        date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        shoppingList: ['Chicken - 2kg', 'Beef - 1kg', 'Spices'],
+        status: 'submitted',
+        submittedAt: new Date().toISOString(),
+        bazaarPairId: 'pair-1',
+      },
+    ],
+    bazaarExpenses: [
+      {
+        id: 'bexp-1',
+        assignmentId: 'bazaar-2',
+        userId: 'user-member',
+        date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        items: [
+          { name: 'Chicken (2kg)', cost: 600 },
+          { name: 'Beef (1kg)', cost: 750 },
+          { name: 'Spices', cost: 200 },
+        ],
+        totalCost: 1550,
+        status: 'pending',
+        submittedAt: new Date().toISOString(),
+      },
+    ],
+    weeklyPayments: [],
+    contactMessages: [],
+    refundRequests: [],
+    sharedBills: [
+      {
+        id: 'bill-rent-1',
+        month: new Date().toISOString().slice(0, 7),
+        type: 'rent',
+        label: 'House Rent',
+        totalAmount: 10000,
+        dueDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'bill-elec-1',
+        month: new Date().toISOString().slice(0, 7),
+        type: 'electricity',
+        label: 'Electricity Bill',
+        totalAmount: 2000,
+        dueDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'bill-wifi-1',
+        month: new Date().toISOString().slice(0, 7),
+        type: 'wifi',
+        label: 'WiFi Bill',
+        totalAmount: 1000,
+        dueDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'bill-servant-1',
+        month: new Date().toISOString().slice(0, 7),
+        type: 'servant_fee',
+        label: 'Servant Fee',
+        totalAmount: 3000,
+        dueDate: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    memberBillPayments: [],
     settings: DEFAULT_SETTINGS,
   };
 

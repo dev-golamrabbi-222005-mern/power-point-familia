@@ -34,8 +34,10 @@ export default function App() {
           const response = await fetch('/api/auth/me', {
             headers: { 'Authorization': `Bearer ${storedToken}` }
           });
-          const data = await response.json();
-          if (response.ok) {
+          const text = await response.text();
+          let data;
+          try { data = JSON.parse(text); } catch { data = {}; }
+          if (response.ok && data.user) {
             setUser(data.user);
             setToken(storedToken);
           } else {
@@ -124,11 +126,13 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: 'password123' })
       });
-      const data = await response.json();
-      if (response.ok) {
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = {}; }
+      if (response.ok && data.token) {
         handleAuthSuccess(data.user, data.token);
       } else {
-        alert(data.message || 'Demo credentials invalid.');
+        alert(data.message || 'Login failed. Server may not be running.');
       }
     } catch (err) {
       console.error(err);
@@ -211,21 +215,35 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <button
-                id="header-login"
-                onClick={() => { setAuthTab('login'); setIsAuthOpen(true); }}
-                className="px-4 py-2 hover:bg-zinc-850 text-zinc-200 text-xs font-bold rounded-xl transition-all border border-zinc-800 shadow-3xs cursor-pointer"
+            <div className="flex items-center gap-3">
+              <a
+                href="/about"
+                className="text-xs text-zinc-400 hover:text-zinc-200 font-medium transition-colors"
               >
-                Sign In
-              </button>
-              <button
-                id="header-register"
-                onClick={() => { setAuthTab('register'); setIsAuthOpen(true); }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer"
+                About
+              </a>
+              <a
+                href="/contact"
+                className="text-xs text-zinc-400 hover:text-zinc-200 font-medium transition-colors"
               >
-                Register
-              </button>
+                Contact
+              </a>
+              <div className="flex gap-2 ml-2">
+                <button
+                  id="header-login"
+                  onClick={() => { setAuthTab('login'); setIsAuthOpen(true); }}
+                  className="px-4 py-2 hover:bg-zinc-850 text-zinc-200 text-xs font-bold rounded-xl transition-all border border-zinc-800 shadow-3xs cursor-pointer"
+                >
+                  Sign In
+                </button>
+                <button
+                  id="header-register"
+                  onClick={() => { setAuthTab('register'); setIsAuthOpen(true); }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer"
+                >
+                  Register
+                </button>
+              </div>
             </div>
           </div>
         </nav>
@@ -273,9 +291,17 @@ export default function App() {
               <span className="font-display font-bold text-zinc-100 text-xs">Power Point Familia</span>
             </div>
             
-            <p className="text-[11px] text-zinc-500 font-mono text-center md:text-right">
-              Secured with JWT (JSON Web Tokens) & PBKDF2 Password Hashing. Powered by React, Vite, and Express.
-            </p>
+            <div className="flex items-center gap-6">
+              <a href="/about" className="text-[11px] text-zinc-500 hover:text-zinc-300 font-medium transition-colors">
+                About
+              </a>
+              <a href="/contact" className="text-[11px] text-zinc-500 hover:text-zinc-300 font-medium transition-colors">
+                Contact
+              </a>
+              <p className="text-[11px] text-zinc-500 font-mono text-center md:text-right">
+                Secured with JWT & PBKDF2. Powered by Next.js, TypeScript & MongoDB.
+              </p>
+            </div>
           </div>
         </footer>
       )}
