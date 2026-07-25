@@ -5,39 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import DashboardLayout from '@/src/components/DashboardLayout';
 import MemberDashboard from '@/src/components/MemberDashboard';
-import { MealMenu } from '@/src/types';
 
 export default function MemberDashboardPage() {
   const { user, token, loading, logout } = useAuth();
   const router = useRouter();
 
-  const [menus, setMenus] = useState<MealMenu[]>([]);
-  const [mealRate, setMealRate] = useState<number>(45);
-
-  const fetchSystemData = async () => {
-    try {
-      const menuRes = await fetch('/api/menu');
-      if (menuRes.ok) setMenus(await menuRes.json());
-
-      const settingsRes = await fetch('/api/settings');
-      if (settingsRes.ok) {
-        const sData = await settingsRes.json();
-        setMealRate(sData.mealRate || 45);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
     if (!loading) {
       if (!user || !token) {
         router.push('/login');
-      } else {
-        fetchSystemData();
       }
     }
-  }, [user, token, loading]);
+  }, [user, token, loading, router]);
 
   if (loading || !user || !token) {
     return (
@@ -53,9 +32,6 @@ export default function MemberDashboardPage() {
       <MemberDashboard
         user={user}
         token={token}
-        menus={menus}
-        mealRate={mealRate}
-        onRefreshStats={fetchSystemData}
       />
     </DashboardLayout>
   );

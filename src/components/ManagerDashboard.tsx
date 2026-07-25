@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MealMenu, MealRecord, Deposit, DashboardStats, BazaarAssignment, BazaarExpense, RefundRequest } from '../types';
+import { User, MealMenu, MealRecord, Deposit, DashboardStats, BazaarAssignment, BazaarExpense, RefundRequest, SystemSettings } from '../types';
 import { ChefHat, Plus, Trash2, Edit3, ClipboardList, Check, X, Calendar, CalendarDays, DollarSign, Users, RefreshCw, AlertCircle, TrendingUp, HelpCircle, ShoppingCart, CalendarRange, AlertTriangle, Bell, Send, Eye, UserCheck, CheckCircle2, Search, UserX, Sun, Moon, Image as ImageIcon, Receipt, Utensils, Wallet } from 'lucide-react';
 
 interface ManagerDashboardProps {
@@ -36,6 +36,25 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
   // Auto-book toggle state
   const [autoBookEnabled, setAutoBookEnabled] = useState(true);
   const [autoBookLoading, setAutoBookLoading] = useState(false);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [financeButtonLoading, setFinanceButtonLoading] = useState(false);
+  const [showMealCashModal, setShowMealCashModal] = useState(false);
+  const [mealCashMemberId, setMealCashMemberId] = useState('');
+  const [mealCashAmount, setMealCashAmount] = useState('1000');
+  const [mealCashPaymentMethod, setMealCashPaymentMethod] = useState('Cash');
+  const [mealCashTransactionId, setMealCashTransactionId] = useState('');
+  const [mealCashRemarks, setMealCashRemarks] = useState('');
+  const [mealCashError, setMealCashError] = useState('');
+  const [mealCashSuccess, setMealCashSuccess] = useState('');
+  const [mealCashLoading, setMealCashLoading] = useState(false);
+
+  const [utilityBills, setUtilityBills] = useState<any[]>([]);
+  const [utilityFormType, setUtilityFormType] = useState<'rent' | 'electricity' | 'wifi' | 'servant_fee'>('rent');
+  const [utilityTotalAmount, setUtilityTotalAmount] = useState('0');
+  const [utilityDueDate, setUtilityDueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [utilityFormError, setUtilityFormError] = useState('');
+  const [utilityFormSuccess, setUtilityFormSuccess] = useState('');
+  const [utilityUpdating, setUtilityUpdating] = useState(false);
 
   // Meal refund state
   const [mealRefundUserId, setMealRefundUserId] = useState('');
@@ -101,6 +120,14 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
         setManagerStats(statsData.managerStats);
       }
 
+      const settingsRes = await fetch('/api/settings', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const settingsData = await settingsRes.json();
+      if (settingsRes.ok) {
+        setSettings(settingsData);
+      }
+
       const recordsRes = await fetch('/api/records', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -124,8 +151,143 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
       if (usersRes.ok) {
         setSystemUsers(usersData);
       }
+
+      await fetchUtilitiesData();
     } catch (error) {
       console.error('Error fetching manager details', error);
+    }
+  };
+
+  const fetchUtilitiesData = async () => {
+    try {
+      const res = await fetch('/api/utilities', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUtilityBills(data.bills || []);
+      }
+    } catch (e) {
+      console.error('Fetch utilities error', e);
+    }
+  };
+
+  const handleToggleFinanceVisibility = async () => {
+    if (!settings) return;
+    setFinanceButtonLoading(true);
+    try {
+      const duration = (settings.financeVisibilityDurationMinutes || 60) * 60000;
+      const until = new Date(Date.now() + duration).toISOString();
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ financeVisibilityUntil: until })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Unable to update finance visibility');
+      }
+      await fetchManagerData();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Finance visibility update failed');
+    } finally {
+      setFinanceButtonLoading(false);
+    }
+  };
+
+  const handleUtilityBillSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUtilityFormError('');
+    setUtilityFormSuccess('');
+    setUtilityUpdating(true);
+
+    if (!utilityTotalAmount || Number(utilityTotalAmount) <= 0) {
+      setUtilityFormError('Enter a valid bill amount.');
+      setUtilityUpdating(false);
+      return;
+    }
+
+    try {
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const response = await fetch('/api/utilities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          month: currentMonth,
+          type: utilityFormType,
+          label: utilityFormType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          totalAmount: Number(utilityTotalAmount),
+          dueDate: utilityDueDate,
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to save utility bill.');
+      setUtilityFormSuccess(data.message || 'Utility bill saved.');
+      await fetchUtilitiesData();
+      await fetchManagerData();
+    } catch (err: any) {
+      setUtilityFormError(err.message || 'Error saving utility bill.');
+    } finally {
+      setUtilityUpdating(false);
+    }
+  };
+
+  const handleSubmitMealCashTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMealCashError('');
+    setMealCashSuccess('');
+    setMealCashLoading(true);
+
+    if (!mealCashMemberId) {
+      setMealCashError('Select a member.');
+      setMealCashLoading(false);
+      return;
+    }
+    if (!mealCashAmount || Number(mealCashAmount) <= 0) {
+      setMealCashError('Enter a valid amount.');
+      setMealCashLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/deposits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId: mealCashMemberId,
+          amount: Number(mealCashAmount),
+          date: new Date().toISOString().split('T')[0],
+          paymentMethod: mealCashPaymentMethod,
+          transactionId: mealCashTransactionId || `MC-${Date.now()}`,
+          remarks: mealCashRemarks,
+          type: 'meal_cash'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to submit meal cash ticket.');
+      setMealCashSuccess(data.message || 'Meal cash ticket created.');
+      setShowMealCashModal(false);
+      setMealCashMemberId('');
+      setMealCashAmount('1000');
+      setMealCashPaymentMethod('Cash');
+      setMealCashTransactionId('');
+      setMealCashRemarks('');
+      await fetchManagerData();
+      await fetchRefundRequests();
+    } catch (err: any) {
+      setMealCashError(err.message || 'Failed to submit meal cash ticket.');
+    } finally {
+      setMealCashLoading(false);
     }
   };
 
@@ -724,6 +886,37 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
       memberCount: data.members.size,
     }));
   };
+
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+  const currentMonthRecords = allRecords.filter(r => r.date.startsWith(currentMonthKey));
+  const currentMonthMealsCount = currentMonthRecords.reduce((sum, r) => sum + r.count, 0);
+  const currentMonthMealCost = Math.round(currentMonthMealsCount * (managerStats?.liveMealRate || mealRate) * 100) / 100;
+  const currentMonthFixedCost = utilityBills.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+  const currentMonthEstimatedCost = Math.round((currentMonthFixedCost + currentMonthMealCost) * 100) / 100;
+  const financeVisible = settings?.financeVisibilityUntil ? new Date(settings.financeVisibilityUntil) > new Date() : false;
+  const financeVisibilityMessage = financeVisible
+    ? `Finance calculations visible until ${new Date(settings.financeVisibilityUntil!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    : 'Finance visibility is currently off. Click the button to publish for one hour.';
+
+  const individualHistory = memberList.map(member => {
+    const memberDeposits = allDeposits
+      .filter(d => d.userId === member.id && d.status === 'approved')
+      .reduce((sum, d) => sum + d.amount, 0);
+    const memberMeals = allRecords
+      .filter(r => r.userId === member.id && r.date.startsWith(currentMonthKey))
+      .reduce((sum, r) => sum + r.count, 0);
+    const mealCost = Math.round(memberMeals * (managerStats?.liveMealRate || mealRate) * 100) / 100;
+    const fixedShare = Math.round((utilityBills.reduce((sum, b) => sum + (b.memberShare || 0), 0)) * 100) / 100;
+    return {
+      id: member.id,
+      name: member.name,
+      mealCost,
+      fixedShare,
+      totalCost: Math.round((mealCost + fixedShare) * 100) / 100,
+      deposits: memberDeposits,
+      balance: Math.round((memberDeposits - mealCost - fixedShare) * 100) / 100,
+    };
+  });
 
   const monthlyData = computeMonthlyData();
 
@@ -1818,6 +2011,154 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
               </table>
             </div>
           </div>
+
+          <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-6 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-zinc-800 pb-4 mb-5">
+              <div>
+                <h3 className="font-display font-bold text-lg text-zinc-100 flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-emerald-500" />
+                  Finance Reconciliation & Shared Costs
+                </h3>
+                <p className="text-xs text-zinc-400">Publish the latest finance view, track shared bills, and create meal cash payment tickets.</p>
+              </div>
+              <button
+                onClick={handleToggleFinanceVisibility}
+                disabled={financeButtonLoading}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-xs font-bold rounded-xl transition-all"
+              >
+                <DollarSign className="w-4 h-4" />
+                {financeButtonLoading ? 'Updating...' : financeVisible ? 'Refresh Visibility' : 'Publish Finance'}
+              </button>
+            </div>
+
+            <div className="text-xs text-zinc-400 mb-5">{financeVisibilityMessage}</div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Current Month Fixed Costs</p>
+                <p className="text-2xl font-black text-zinc-100 mt-2">{currentMonthFixedCost.toFixed(0)}৳</p>
+                <p className="text-[10px] text-zinc-500 mt-2">Total shared bills for {currentMonthKey}</p>
+              </div>
+              <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Current Month Meal Cost</p>
+                <p className="text-2xl font-black text-amber-400 mt-2">{currentMonthMealCost.toFixed(0)}৳</p>
+                <p className="text-[10px] text-zinc-500 mt-2">{currentMonthMealsCount} meals × {((managerStats?.liveMealRate || mealRate)).toFixed(0)}৳</p>
+              </div>
+              <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Estimated Monthly Total</p>
+                <p className="text-2xl font-black text-teal-400 mt-2">{currentMonthEstimatedCost.toFixed(0)}৳</p>
+                <p className="text-[10px] text-zinc-500 mt-2">Fixed + meal cost</p>
+              </div>
+              <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Meal Cash Tickets</p>
+                <p className="text-2xl font-black text-zinc-100 mt-2">{allDeposits.filter(d => d.type === 'meal_cash').length}</p>
+                <p className="text-[10px] text-zinc-500 mt-2">Pending/approved requests this cycle</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <div className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-5">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">Shared Utility Bills</p>
+                    <p className="text-sm text-zinc-500">Review current month bills and member share estimates.</p>
+                  </div>
+                  <span className="text-[11px] px-2 py-1 rounded-full bg-zinc-800 text-zinc-300">{utilityBills.length} items</span>
+                </div>
+
+                {utilityBills.length > 0 ? (
+                  <div className="space-y-3 mb-4">
+                    {utilityBills.map((bill) => (
+                      <div key={bill.id} className="rounded-xl border border-zinc-800 p-3 bg-zinc-950/70">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-bold text-zinc-100">{bill.label}</p>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Due {new Date(bill.dueDate).toLocaleDateString()}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-black text-zinc-100">{bill.totalAmount.toFixed(0)}৳</p>
+                            <p className="text-[10px] text-zinc-500">Share: {bill.memberShare.toFixed(0)}৳</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-zinc-500 mb-4">No shared utility bills found for {currentMonthKey}. Add a bill below to start the split.</div>
+                )}
+
+                <form onSubmit={handleUtilityBillSubmit} className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <select value={utilityFormType} onChange={e => setUtilityFormType(e.target.value as any)} className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100">
+                      <option value="rent">Rent</option>
+                      <option value="electricity">Electricity</option>
+                      <option value="wifi">WiFi</option>
+                      <option value="servant_fee">Servant Fee</option>
+                    </select>
+                    <input
+                      value={utilityTotalAmount}
+                      onChange={e => setUtilityTotalAmount(e.target.value)}
+                      type="number"
+                      min="0"
+                      placeholder="Total Amount"
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input
+                      type="date"
+                      value={utilityDueDate}
+                      onChange={e => setUtilityDueDate(e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100"
+                    />
+                    <button type="submit" disabled={utilityUpdating} className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 text-white font-bold rounded-xl text-sm transition-all">
+                      {utilityUpdating ? 'Saving...' : 'Save Bill'}
+                    </button>
+                  </div>
+                  {utilityFormError && <p className="text-xs text-red-400">{utilityFormError}</p>}
+                  {utilityFormSuccess && <p className="text-xs text-emerald-400">{utilityFormSuccess}</p>}
+                </form>
+              </div>
+
+              <div className="bg-zinc-900/50 rounded-2xl border border-zinc-800 p-5">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">Meal Cash Ticket System</p>
+                    <p className="text-sm text-zinc-500">Submit per-person pay-now tickets for manager approval.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowMealCashModal(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold rounded-xl transition-all"
+                  >
+                    <Plus className="w-4 h-4" /> Create Ticket
+                  </button>
+                </div>
+
+                {allDeposits.filter(d => d.type === 'meal_cash').length > 0 ? (
+                  <div className="space-y-3">
+                    {allDeposits.filter(d => d.type === 'meal_cash').slice(0, 4).map((ticket) => (
+                      <div key={ticket.id} className="rounded-xl border border-zinc-800 p-3 bg-zinc-950/70 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-bold text-zinc-100">{systemUsers.find(u => u.id === ticket.userId)?.name || 'Member'}</p>
+                          <p className="text-[10px] text-zinc-500">{ticket.paymentMethod} • {new Date(ticket.date).toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-black text-zinc-100">{ticket.amount.toFixed(0)}৳</p>
+                          <p className={`text-[10px] font-bold ${ticket.status === 'approved' ? 'text-emerald-400' : ticket.status === 'rejected' ? 'text-red-400' : 'text-amber-400'}`}>{ticket.status}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {allDeposits.filter(d => d.type === 'meal_cash').length > 4 && (
+                      <p className="text-[10px] text-zinc-500">Showing recent 4 tickets. Review full deposit list in the Dashboard requests section.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-xs text-zinc-500">No meal cash tickets submitted yet. Create one to request payment and document the transaction.</div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1987,6 +2328,108 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
               <X className="w-5 h-5" />
             </button>
             <img src={enlargedReceipt} alt="Receipt full size" className="w-full h-auto rounded-2xl shadow-2xl border border-zinc-800" />
+          </div>
+        </div>
+      )}
+
+      {/* Meal Cash Ticket Modal */}
+      {showMealCashModal && (
+        <div className="fixed inset-0 bg-[#0a0a0a]/80 backdrop-blur-sm flex items-center justify-center p-4 z-60" onClick={() => setShowMealCashModal(false)}>
+          <div className="bg-[#111111] border border-zinc-800 rounded-3xl shadow-2xl w-full max-w-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+              <div>
+                <h3 className="font-display font-bold text-lg text-zinc-100">Create Meal Cash Ticket</h3>
+                <p className="text-xs text-zinc-500">Capture a manager-initiated payment ticket for member meal cash deposits.</p>
+              </div>
+              <button onClick={() => setShowMealCashModal(false)} className="p-2 rounded-full text-zinc-400 hover:bg-zinc-900 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitMealCashTicket} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="flex flex-col text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Member
+                  <select
+                    required
+                    value={mealCashMemberId}
+                    onChange={e => setMealCashMemberId(e.target.value)}
+                    className="mt-2 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100"
+                  >
+                    <option value="">Select member</option>
+                    {memberList.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </select>
+                </label>
+                <label className="flex flex-col text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Amount
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    value={mealCashAmount}
+                    onChange={e => setMealCashAmount(e.target.value)}
+                    className="mt-2 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100"
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="flex flex-col text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Payment Method
+                  <select
+                    required
+                    value={mealCashPaymentMethod}
+                    onChange={e => setMealCashPaymentMethod(e.target.value)}
+                    className="mt-2 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100"
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="bKash">bKash</option>
+                    <option value="Nagad">Nagad</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                  </select>
+                </label>
+                <label className="flex flex-col text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Transaction ID
+                  <input
+                    type="text"
+                    value={mealCashTransactionId}
+                    onChange={e => setMealCashTransactionId(e.target.value)}
+                    placeholder="Optional receipt or ref"
+                    className="mt-2 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100"
+                  />
+                </label>
+              </div>
+
+              <label className="flex flex-col text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                Remarks
+                <textarea
+                  value={mealCashRemarks}
+                  onChange={e => setMealCashRemarks(e.target.value)}
+                  placeholder="Optional note for the ticket"
+                  rows={3}
+                  className="mt-2 px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-2xl text-sm text-zinc-100 resize-none"
+                />
+              </label>
+
+              {mealCashError && <p className="text-xs text-red-400">{mealCashError}</p>}
+              {mealCashSuccess && <p className="text-xs text-emerald-400">{mealCashSuccess}</p>}
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowMealCashModal(false)}
+                  className="w-full sm:w-auto px-4 py-2 bg-zinc-800 text-zinc-300 rounded-xl text-sm font-bold hover:bg-zinc-700 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={mealCashLoading}
+                  className="w-full sm:w-auto px-4 py-2 bg-amber-500 text-zinc-950 rounded-xl text-sm font-bold hover:bg-amber-400 transition-all disabled:opacity-70"
+                >
+                  {mealCashLoading ? 'Submitting...' : 'Submit Ticket'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

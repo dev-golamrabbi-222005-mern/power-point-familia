@@ -109,6 +109,13 @@
       "date": "2026-07-22",
       "mealType": "lunch",
       "count": 1
+    },
+    {
+      "id": "rec-1784816896906-0.09725567538406987",
+      "userId": "user-member",
+      "date": "2026-07-24",
+      "mealType": "dinner",
+      "count": 1
     }
   ],
   "deposits": [
@@ -137,5 +144,27 @@
     "initialWeekPayment": 1000,
     "monthlyFlatRate": 2500,
     "startWeekDate": "2026-07-22"
-  }
+  },
+  "mealToggleLog": [
+    {
+      "id": "log-1784816896907-0.5178391110778778",
+      "userId": "user-member",
+      "date": "2026-07-24",
+      "mealType": "dinner",
+      "action": "off",
+      "oldCount": 0,
+      "newCount": 0,
+      "timestamp": "2026-07-23T14:28:16.907Z"
+    },
+    {
+      "id": "log-1784816901582-0.6537431592837314",
+      "userId": "user-member",
+      "date": "2026-07-24",
+      "mealType": "dinner",
+      "action": "on",
+      "oldCount": 0,
+      "newCount": 1,
+      "timestamp": "2026-07-23T14:28:21.582Z"
+    }
+  ]
 }

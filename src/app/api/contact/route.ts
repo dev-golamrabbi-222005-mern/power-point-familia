@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, saveDb, ensureDbInit } from '@/src/lib/db.js';
+import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
 import { ContactMessage } from '@/src/types';
 
 export async function POST(req: NextRequest) {
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     }
     
     // Reuse auth
-    const { authenticate } = await import('@/src/lib/auth.js');
+    const { authenticate } = await import('@/src/lib/auth');
     const { error } = authenticate(req, ['admin']);
     if (error) return error;
 

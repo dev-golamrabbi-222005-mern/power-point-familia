@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { MongoClient } from 'mongodb';
-import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest, MonthlySummary } from '../types';
+import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest, MonthlySummary, MealToggleLog } from '../types';
 
 export interface DatabaseSchema {
   users: (User & { passwordHash: string })[];
@@ -18,6 +18,7 @@ export interface DatabaseSchema {
   memberBillPayments: MemberBillPayment[];
   refundRequests: RefundRequest[];
   monthlySummaries: MonthlySummary[];
+  mealToggleLog?: MealToggleLog[];
   settings: SystemSettings;
 }
 
@@ -31,9 +32,10 @@ const DEFAULT_SETTINGS: SystemSettings = {
   startWeekDate: new Date().toISOString().split('T')[0],
   autoBookMeals: true,
   currentPairIndex: 0,
+  financeVisibilityDurationMinutes: 60,
 };
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://power-point-famila:MhyloARZhkNmRpwU@mrcluster.zsepnby.mongodb.net/?appName=MRcluster';
+const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = 'Power-Point-Famila';
 
 let client: MongoClient | null = null;

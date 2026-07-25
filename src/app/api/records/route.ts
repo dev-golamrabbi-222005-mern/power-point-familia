@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate } from '@/src/lib/auth.js';
-import { getDb, ensureDbInit } from '@/src/lib/db.js';
+import { authenticate } from '@/src/lib/auth';
+import { getDb, ensureDbInit } from '@/src/lib/db';
 
 export async function GET(req: NextRequest) {
   try {

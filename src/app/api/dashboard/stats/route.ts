@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate } from '@/src/lib/auth.js';
-import { getDb, ensureDbInit } from '@/src/lib/db.js';
+import { authenticate } from '@/src/lib/auth';
+import { getDb, ensureDbInit } from '@/src/lib/db';
 
 function getCurrentWeekStart(): string {
   const d = new Date();
@@ -173,6 +173,12 @@ export async function GET(req: NextRequest) {
         deficitMembers,
         pendingResetRequest,
         autoBookEnabled: db.settings.autoBookMeals ?? true,
+        currentMonthFixedCost: currentBills.reduce((sum, bill) => sum + bill.totalAmount, 0),
+        currentMonthFixedCostShare: totalShare,
+        currentMonthMealCashAdded: db.deposits
+          .filter(d => d.status === 'approved' && d.type === 'meal_cash' && d.date.startsWith(currentMonth))
+          .reduce((sum, d) => sum + d.amount, 0),
+        financeVisibilityUntil: db.settings.financeVisibilityUntil,
         bazaarRotationOrder: approvedMembers.map(m => ({
           userId: m.id,
           name: m.name,

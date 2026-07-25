@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate } from '@/src/lib/auth.js';
-import { getDb, saveDb, ensureDbInit } from '@/src/lib/db.js';
+import { authenticate } from '@/src/lib/auth';
+import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -48,6 +48,12 @@ export async function PUT(req: NextRequest) {
     }
     if (bazaarRotationIndex !== undefined) {
       db.settings.currentPairIndex = Number(bazaarRotationIndex);
+    }
+    if (body.financeVisibilityUntil !== undefined) {
+      db.settings.financeVisibilityUntil = body.financeVisibilityUntil;
+    }
+    if (body.financeVisibilityDurationMinutes !== undefined) {
+      db.settings.financeVisibilityDurationMinutes = Number(body.financeVisibilityDurationMinutes);
     }
     saveDb(db);
 

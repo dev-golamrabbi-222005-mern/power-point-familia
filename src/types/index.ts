@@ -38,6 +38,7 @@ export interface Deposit {
   paymentMethod: string;
   transactionId: string;
   status: 'pending' | 'approved' | 'rejected';
+  type?: 'meal_cash' | 'utility' | 'weekly_payment' | 'refund' | 'other';
   remarks?: string;
   userName?: string; // Hydrated for manager/admin display
   userEmail?: string;
@@ -91,10 +92,12 @@ export interface WeeklyPayment {
   userName?: string; // Hydrated
 }
 
+export type FixedUtilityType = 'rent' | 'electricity' | 'wifi' | 'gas' | 'servant_fee';
+
 export interface SharedBill {
   id: string;
   month: string; // YYYY-MM
-  type: 'rent' | 'electricity' | 'wifi' | 'servant_fee';
+  type: FixedUtilityType;
   label: string; // Display name
   totalAmount: number; // Total bill for all members
   dueDate: string; // YYYY-MM-DD
@@ -105,7 +108,7 @@ export interface MemberBillPayment {
   id: string;
   userId: string;
   month: string; // YYYY-MM
-  type: 'rent' | 'electricity' | 'wifi' | 'servant_fee';
+  type: FixedUtilityType;
   amount: number;
   paidAt: string;
   depositId?: string; // Link to deposit if applicable
@@ -147,6 +150,8 @@ export interface SystemSettings {
   startWeekDate: string; // Start of weekly cycle YYYY-MM-DD
   autoBookMeals: boolean; // Auto-book all members for published menus
   currentPairIndex: number; // Index tracking which BazaarPair is up next
+  financeVisibilityUntil?: string; // Manager can publish finance calculations for a short window
+  financeVisibilityDurationMinutes?: number;
 }
 
 export interface AuthState {
@@ -189,6 +194,10 @@ export interface DashboardStats {
     bazaarRotationOrder: { userId: string; name: string; bazaarCount: number }[];
     weekBazaarCount: number; // How many bazaars scheduled this week
     totalCashInHand: number; // Manager's physical cash in hand
+    currentMonthFixedCost?: number;
+    currentMonthFixedCostShare?: number;
+    currentMonthMealCashAdded?: number;
+    financeVisibilityUntil?: string;
     pendingResetRequest?: MonthlySummary | null;
   };
 }
@@ -214,5 +223,141 @@ export interface MonthlySummary {
   initiatedAt: string;
   approvedBy?: string;
   approvedAt?: string;
+}
+
+// === MEMBER DASHBOARD NEW TYPES ===
+
+export interface MemberOverviewData {
+  myTotalMeals: number;
+  todayMyMeals: number;
+  messTotalMeals: number;
+  todayMessMeals: number;
+  liveMealRate: number;
+  today: string;
+}
+
+export interface MealCostData {
+  date: string;
+  dayLabel?: string;
+  week?: string;
+  myMealCost: number;
+  myLivingCost: number;
+  myTotalCost: number;
+  messMealCost: number;
+  messLivingCost: number;
+  messTotalCost: number;
+}
+
+export interface MealCostAggregates {
+  myMealCost: number;
+  myLivingCost: number;
+  myTotalCost: number;
+  messMealCost: number;
+  messLivingCost: number;
+  messTotalCost: number;
+}
+
+export interface MealCostsBreakdownResponse {
+  weekly: {
+    data: MealCostData[];
+    aggregates: MealCostAggregates;
+    dateRange: { start: string; end: string };
+  };
+  monthly: {
+    data: MealCostData[];
+    aggregates: MealCostAggregates;
+    dateRange: { start: string; end: string };
+  };
+}
+
+export interface BazaarActivityDetail {
+  userId: string;
+  userName: string;
+  totalCost: number;
+  items: string;
+  status: string;
+}
+
+export interface MealSummary {
+  totalMeals: number;
+  lunch: number;
+  dinner: number;
+}
+
+export interface CalendarActivityData {
+  date: string;
+  dayName: string;
+  bazaarCount: number;
+  bazaarDetails: BazaarActivityDetail[];
+  totalBazaarCost: number;
+  mealSummary: MealSummary;
+}
+
+export interface MealToggleLog {
+  id: string;
+  userId: string;
+  date: string;
+  mealType: 'lunch' | 'dinner';
+  action: 'on' | 'off';
+  oldCount: number;
+  newCount: number;
+  timestamp: string;
+}
+
+export interface FixedExpenseItem {
+  type: FixedUtilityType;
+  label: string;
+  share: number;
+  paid: number;
+  status: 'paid' | 'pending';
+  dueDate?: string;
+  paymentId?: string;
+}
+
+export interface FinanceOverviewData {
+  currentMonthName: string;
+  fixedCostPaid: number;
+  mealCashAdded: number;
+  estimatedTotalCost: number;
+  fixedExpenses: FixedExpenseItem[];
+  myTotalMeals: number;
+  liveMealRate: number;
+  actualMealCost: number;
+  actualTotalCost: number;
+  isCalculationVisible: boolean;
+  financeVisibilityUntil?: string;
+  weeklyMealCashGuidance: {
+    currentWeekNumber: number; // 1 to 4
+    suggestedAmount: number; // 1000 for week 1, 500 for weeks 2-4
+    totalMonthTarget: number; // 2500
+  };
+}
+
+export interface MonthlyHistoryRecord {
+  month: string;
+  monthName: string;
+  fixedCost: number;
+  mealCost: number;
+  totalCost: number;
+  status: 'settled' | 'pending' | 'in_progress';
+}
+
+export interface MessMonthlyHistoryRecord {
+  month: string;
+  monthName: string;
+  totalFixedCost: number;
+  totalMealCost: number;
+  totalMessCost: number;
+  status: 'settled' | 'pending' | 'in_progress';
+}
+
+export interface BazaarDutyInfo {
+  hasDuty: boolean;
+  date: string;
+  pairPartnerName?: string;
+  shoppingList?: string[];
+  budget?: number;
+  assignmentId?: string;
+  status?: string;
 }
 

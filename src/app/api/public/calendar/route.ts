@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, ensureDbInit } from '@/src/lib/db.js';
+import { getDb, ensureDbInit } from '@/src/lib/db';
 
 // Public endpoint — no auth required
 // Returns aggregated calendar data for the homepage

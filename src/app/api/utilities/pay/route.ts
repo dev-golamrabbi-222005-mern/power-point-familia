@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate } from '@/src/lib/auth.js';
-import { getDb, saveDb, ensureDbInit } from '@/src/lib/db.js';
+import { authenticate } from '@/src/lib/auth';
+import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
 import { MemberBillPayment } from '@/src/types';
 
 export async function POST(req: NextRequest) {

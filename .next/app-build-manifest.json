@@ -11,25 +11,50 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/api/menu/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/menu/route.js"
-    ],
     "/api/public/calendar/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/public/calendar/route.js"
+    ],
+    "/api/menu/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/menu/route.js"
     ],
     "/api/auth/me/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/auth/me/route.js"
     ],
+    "/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/page.js"
+    ],
     "/api/settings/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/settings/route.js"
+    ],
+    "/api/dashboard/member-overview/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/dashboard/member-overview/route.js"
+    ],
+    "/api/dashboard/meal-costs-breakdown/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/dashboard/meal-costs-breakdown/route.js"
+    ],
+    "/api/finance/overview/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/finance/overview/route.js"
+    ],
+    "/api/history/monthly/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/history/monthly/route.js"
     ]
   }
 }

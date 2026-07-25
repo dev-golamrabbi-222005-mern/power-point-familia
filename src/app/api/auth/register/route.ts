@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getDb, saveDb, ensureDbInit } from '@/src/lib/db.js';
+import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
 import { UserRole } from '@/src/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'SUPER_SECRET_FAMILIA_JWT_KEY';

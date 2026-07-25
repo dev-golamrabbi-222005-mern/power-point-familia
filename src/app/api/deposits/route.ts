@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticate } from '@/src/lib/auth.js';
-import { getDb, saveDb, ensureDbInit } from '@/src/lib/db.js';
+import { authenticate } from '@/src/lib/auth';
+import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
 import { Deposit } from '@/src/types';
 
 export async function GET(req: NextRequest) {
@@ -34,14 +34,18 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { error, user } = authenticate(req, ['member']);
+    const { error, user } = authenticate(req, ['member', 'manager', 'admin']);
     if (error) return error;
 
-    const { amount, date, paymentMethod, transactionId, remarks } = await req.json();
+    const { userId, amount, date, paymentMethod, transactionId, remarks, type } = await req.json();
 
-    if (!amount || !date || !paymentMethod || !transactionId) {
+    const targetUserId = user!.role === 'member'
+      ? user!.id
+      : userId || user!.id;
+
+    if (!targetUserId || !amount || !date || !paymentMethod || !transactionId) {
       return NextResponse.json(
-        { message: 'amount, date, paymentMethod, and transactionId are required.' },
+        { message: 'userId, amount, date, paymentMethod, and transactionId are required.' },
         { status: 400 }
       );
     }
@@ -57,12 +61,13 @@ export async function POST(req: NextRequest) {
     const db = getDb();
     const newDeposit: Deposit = {
       id: `dep-${Date.now()}`,
-      userId: user!.id,
+      userId: targetUserId,
       amount: Number(amount),
       date,
       paymentMethod,
       transactionId,
       status: 'pending',
+      type: type || 'meal_cash',
       remarks,
     };
 
