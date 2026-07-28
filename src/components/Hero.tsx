@@ -6,7 +6,7 @@ import { MealMenu, BazaarAssignment, BazaarExpense } from '../types';
 interface HeroProps {
   onLoginClick: () => void;
   onRegisterClick: () => void;
-  onDemoLogin: (email: string) => void;
+  onDemoLogin?: (email: string) => void;
   menus: MealMenu[];
   mealRate: number;
 }
@@ -67,13 +67,6 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
 
   // Enlarge popup for receipt images
   const [enlargedReceipt, setEnlargedReceipt] = useState<string | null>(null);
-
-  const demoAccounts = [
-    { name: 'Admin', email: 'admin@familia.com', desc: 'Manage users, assign roles & set rates' },
-    { name: 'Manager', email: 'manager@familia.com', desc: 'Publish daily menus & approve deposits' },
-    { name: 'Member', email: 'member@familia.com', desc: 'Book daily meals & request deposits' },
-    { name: 'Guest', email: 'guest@familia.com', desc: 'Pending user, update profile setup' }
-  ];
 
   return (
     <div id="home-landing" className="relative overflow-hidden pt-12 pb-24 bg-[#0a0a0a]">
@@ -184,82 +177,10 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
 </svg>
 
           </div>
-
-          {/* Today's Menu Display
-          <div className="lg:col-span-5 bg-[#111111] border border-zinc-800/80 shadow-2xl rounded-2xl p-6 relative">
-            <div className="absolute top-4 right-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Live System Active</span>
-            </div>
-            
-            <div className="flex items-center gap-3 border-b border-zinc-800 pb-4 mb-5">
-              <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
-                <Utensils className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg text-zinc-100">Today's Menu</h3>
-                <p className="text-xs text-zinc-500">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</p>
-              </div>
-            </div>
-
-            {todayMenus.length > 0 ? (
-              <div className="space-y-4">
-                {todayMenus.map((menu) => (
-                  <div key={menu.id} className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/80">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="capitalize text-[10px] font-bold text-zinc-400 tracking-wider bg-zinc-850 px-2 py-0.5 rounded border border-zinc-800/80 shadow-xs">
-                        {menu.mealType}
-                      </span>
-                      <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/15">
-                        Est. Cost: {menu.estimatedCost}৳
-                      </span>
-                    </div>
-                    <ul className="grid grid-cols-2 gap-2 text-zinc-300 text-sm mt-3 font-sans">
-                      {menu.items.map((item, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span className="truncate">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-zinc-900/30 rounded-xl border border-dashed border-zinc-800">
-                <BookOpen className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-                <p className="text-sm text-zinc-400 font-medium">Menu is pending publication.</p>
-                <p className="text-xs text-zinc-500 mt-1">Managers publish menus daily!</p>
-              </div>
-            )}
-
-            <div className="mt-6 p-4 bg-zinc-900/40 border border-zinc-800 rounded-xl">
-              <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Demo Testing Shortcut</h4>
-              <p className="text-xs text-zinc-400 mb-3">Instantly simulate any RBAC access level with a pre-seeded account:</p>
-              <div className="grid grid-cols-2 gap-2">
-                {demoAccounts.map(acc => (
-                  <button
-                    key={acc.email}
-                    id={`btn-demo-${acc.name.toLowerCase()}`}
-                    onClick={() => onDemoLogin(acc.email)}
-                    className="p-2 bg-[#18181b]/80 hover:bg-zinc-850 border border-zinc-800 rounded-lg text-left transition-all text-xs hover:border-emerald-500/40 shadow-2xs group cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between font-semibold text-zinc-200">
-                      <span>{acc.name}</span>
-                      <span className="text-[10px] text-emerald-500 group-hover:translate-x-0.5 transition-transform">→</span>
-                    </div>
-                    <p className="text-[10px] text-zinc-500 line-clamp-1">{acc.desc}</p>
-                  </button>
-                ))}
-              </div>
-              <div className="mt-2.5 text-center text-[10px] text-zinc-400 font-medium bg-zinc-950/50 py-1.5 rounded border border-zinc-800/80">
-                Default Password: <span className="font-mono bg-zinc-900 text-zinc-200 px-1.5 py-0.5 rounded border border-zinc-800">password123</span>
-              </div>
-            </div>
-          </div> */}
-
         </div>
-      </div>        {/* Current Bazaar Pair */}
+      </div>
+
+      {/* Current Bazaar Pair */}
       {bazaarPairData && bazaarPairData.currentPair && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
           <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/5 border border-blue-500/20 rounded-2xl p-5 flex items-center justify-between">

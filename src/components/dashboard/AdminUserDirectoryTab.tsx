@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '@/src/types';
-import { Users, Search, RefreshCw, ShieldCheck, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Users, Search, RefreshCw, Edit3, Trash2, X, Save, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 interface AdminUserDirectoryTabProps {
   currentUser: User;
@@ -14,6 +14,83 @@ export default function AdminUserDirectoryTab({ currentUser, token, allUsers, lo
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Edit User Modal State
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editRole, setEditRole] = useState<UserRole>('member');
+  const [editStatus, setEditStatus] = useState<User['status']>('approved');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openEditModal = (usr: User) => {
+    setEditingUser(usr);
+    setEditName(usr.name || '');
+    setEditEmail(usr.email || '');
+    setEditPhone(usr.phone || '');
+    setEditRole(usr.role);
+    setEditStatus(usr.status);
+  };
+
+  const handleSaveFullUserEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    try {
+      setSavingEdit(true);
+      const res = await fetch(`/api/members/${editingUser.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: editName,
+          email: editEmail,
+          phone: editPhone,
+          role: editRole,
+          status: editStatus
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update user profile');
+
+      setEditingUser(null);
+      onRefreshData();
+    } catch (err: any) {
+      alert(err.message || 'Error updating user profile');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteUser = async (usr: User) => {
+    if (usr.id === currentUser.id) {
+      alert('You cannot delete your own superuser account!');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to permanently delete user "${usr.name}" (${usr.email})? This action cannot be undone!`)) {
+      return;
+    }
+
+    setUpdatingId(usr.id);
+    try {
+      const res = await fetch(`/api/members/${usr.id}/role`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to delete user');
+      onRefreshData();
+    } catch (err: any) {
+      alert(err.message || 'Error deleting user');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const handleUpdateUserRoleAndStatus = async (targetId: string, newRole: UserRole, newStatus: User['status']) => {
     if (targetId === currentUser.id) {
@@ -56,7 +133,7 @@ export default function AdminUserDirectoryTab({ currentUser, token, allUsers, lo
           <h3 className="font-display font-bold text-lg text-zinc-100 flex items-center gap-2">
             <Users className="w-5 h-5 text-emerald-500" /> User Directory & Access Control
           </h3>
-          <p className="text-xs text-zinc-400">Admin control panel for user roles, verification, and access levels</p>
+          <p className="text-xs text-zinc-400">Admin A-Z control panel for editing user details, status, ban, and deletion</p>
         </div>
         <button
           onClick={onRefreshData}
@@ -151,7 +228,7 @@ export default function AdminUserDirectoryTab({ currentUser, token, allUsers, lo
                   >
                     <option value="approved">Approved</option>
                     <option value="pending">Pending</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="rejected">Rejected / Inactive</option>
                   </select>
                 </td>
                 <td className="py-3 px-4 text-right">
@@ -159,6 +236,15 @@ export default function AdminUserDirectoryTab({ currentUser, token, allUsers, lo
                     <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Superuser</span>
                   ) : (
                     <div className="flex justify-end gap-1.5 text-[11px] font-bold">
+                      <button
+                        onClick={() => openEditModal(usr)}
+                        className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 rounded-lg cursor-pointer transition-all flex items-center gap-1"
+                        title="A-Z Full Profile Edit"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+
                       {usr.role === 'user' && (
                         <button
                           onClick={() => handleUpdateUserRoleAndStatus(usr.id, 'member', 'approved')}
@@ -183,6 +269,15 @@ export default function AdminUserDirectoryTab({ currentUser, token, allUsers, lo
                           Demote to Member
                         </button>
                       )}
+
+                      <button
+                        onClick={() => handleDeleteUser(usr)}
+                        disabled={updatingId === usr.id}
+                        className="px-2 py-1 bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/20 rounded-lg cursor-pointer transition-all flex items-center justify-center disabled:opacity-50"
+                        title="Delete User"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   )}
                 </td>
@@ -191,6 +286,117 @@ export default function AdminUserDirectoryTab({ currentUser, token, allUsers, lo
           </tbody>
         </table>
       </div>
+
+      {/* FULL A-Z USER EDITING MODAL */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-[#0a0a0a]/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[#111111] border border-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800 bg-[#0f0f0f]">
+              <h3 className="font-display font-bold text-lg text-zinc-100 flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-emerald-500" /> Full A-Z Profile Edit
+              </h3>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="p-1.5 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFullUserEdit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100 font-semibold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100 font-semibold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="e.g. +8801700000000"
+                  className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-100 font-semibold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                    System Role
+                  </label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as UserRole)}
+                    className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 cursor-pointer"
+                  >
+                    <option value="user">Guest</option>
+                    <option value="member">Member</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                    Account Status
+                  </label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as User['status'])}
+                    className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 cursor-pointer"
+                  >
+                    <option value="approved">Approved / Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Inactive / Banned</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="flex-1 py-2.5 border border-zinc-800 text-zinc-400 font-bold rounded-xl text-xs hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{savingEdit ? 'Saving...' : 'Save Profile'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

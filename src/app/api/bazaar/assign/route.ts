@@ -12,19 +12,29 @@ export async function GET(req: NextRequest) {
     const db = getDb();
     
     if (user!.role === 'manager' || user!.role === 'admin') {
-      // Return all assignments with user names
+      // Return all assignments with both member names hydrated
       const enriched = db.bazaarAssignments.map(a => {
-        const u = db.users.find(usr => usr.id === a.userId);
-        return { ...a, userName: u ? u.name : 'Unknown' };
+        const u1 = db.users.find(usr => usr.id === a.userId);
+        const u2 = db.users.find(usr => usr.id === a.member2Id);
+        return {
+          ...a,
+          userName: u1 ? u1.name : 'Member 1',
+          member2Name: u2 ? u2.name : 'Member 2',
+        };
       });
       return NextResponse.json(enriched);
     } else {
-      // Members see only their own assignments
+      // Members see assignments where they are either Member 1 or Member 2
       const enriched = db.bazaarAssignments
-        .filter(a => a.userId === user!.id)
+        .filter(a => a.userId === user!.id || a.member2Id === user!.id)
         .map(a => {
-          const u = db.users.find(usr => usr.id === a.userId);
-          return { ...a, userName: u ? u.name : 'Unknown' };
+          const u1 = db.users.find(usr => usr.id === a.userId);
+          const u2 = db.users.find(usr => usr.id === a.member2Id);
+          return {
+            ...a,
+            userName: u1 ? u1.name : 'Member 1',
+            member2Name: u2 ? u2.name : 'Member 2',
+          };
         });
       return NextResponse.json(enriched);
     }
@@ -39,11 +49,11 @@ export async function POST(req: NextRequest) {
     const { error, user } = authenticate(req, ['manager', 'admin']);
     if (error) return error;
 
-    const { userId, date, shoppingList } = await req.json();
+    const { userId, member2Id, date, shoppingList, budget } = await req.json();
 
     if (!userId || !date) {
       return NextResponse.json(
-        { message: 'userId and date are required.' },
+        { message: 'Primary member (userId) and date are required.' },
         { status: 400 }
       );
     }
@@ -51,38 +61,32 @@ export async function POST(req: NextRequest) {
     await ensureDbInit();
     const db = getDb();
 
-    // Check for duplicate assignment on same date for same user
-    const existing = db.bazaarAssignments.find(
-      a => a.userId === userId && a.date === date && a.status !== 'verified'
-    );
-    if (existing) {
-      return NextResponse.json(
-        { message: 'This member already has a bazaar assignment on this date.' },
-        { status: 400 }
-      );
-    }
-
     const newAssignment: BazaarAssignment = {
       id: `bazaar-${Date.now()}`,
       userId,
+      member2Id: member2Id || undefined,
       date,
       shoppingList: shoppingList || [],
+      budget: Number(budget || 0),
       status: 'pending',
     };
 
     db.bazaarAssignments.push(newAssignment);
     
-    // Increment bazaar count for the assigned user
-    const assignedUser = db.users.find(u => u.id === userId);
-    if (assignedUser) {
-      assignedUser.bazaarCount = (assignedUser.bazaarCount || 0) + 1;
+    // Increment bazaar count for assigned members
+    const user1 = db.users.find(u => u.id === userId);
+    if (user1) user1.bazaarCount = (user1.bazaarCount || 0) + 1;
+
+    if (member2Id) {
+      const user2 = db.users.find(u => u.id === member2Id);
+      if (user2) user2.bazaarCount = (user2.bazaarCount || 0) + 1;
     }
     
     saveDb(db);
 
     return NextResponse.json({
       assignment: newAssignment,
-      message: 'Bazaar assignment created successfully.'
+      message: 'Double member bazaar assignment created with budget!'
     }, { status: 201 });
   } catch (error) {
     console.error('Create bazaar assignment error', error);
@@ -113,36 +117,34 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: 'Bazaar assignment not found.' }, { status: 404 });
     }
 
-    // Only the assigned user or manager/admin can delegate
-    if (assignment.userId !== user!.id && user!.role !== 'manager' && user!.role !== 'admin') {
-      return NextResponse.json({ message: 'You can only delegate your own bazaar assignments.' }, { status: 403 });
+    // Only assigned members or manager/admin can delegate
+    if (assignment.userId !== user!.id && assignment.member2Id !== user!.id && user!.role !== 'manager' && user!.role !== 'admin') {
+      return NextResponse.json({ message: 'You can only delegate your assigned bazaar duties.' }, { status: 403 });
     }
 
     if (assignment.status !== 'pending') {
       return NextResponse.json({ message: 'Cannot delegate a submitted or verified assignment.' }, { status: 400 });
     }
 
-    // Store who delegated from
-    const originalUserId = assignment.userId;
-    assignment.delegatedFrom = originalUserId;
-    
-    // Reassign to delegate
-    assignment.userId = delegateToUserId;
+    // Reassign
+    assignment.delegatedFrom = user!.id;
+    if (assignment.userId === user!.id) {
+      assignment.userId = delegateToUserId;
+    } else {
+      assignment.member2Id = delegateToUserId;
+    }
     assignment.status = 'pending';
 
-    // The original person still gets +1 bazaar count (extra date on their profile)
-    const originalUser = db.users.find(u => u.id === originalUserId);
+    const originalUser = db.users.find(u => u.id === user!.id);
     if (originalUser) {
       originalUser.bazaarCount = (originalUser.bazaarCount || 0) + 1;
     }
-    // Delegate does NOT get extra count — they just take the assignment
 
     saveDb(db);
 
-    const delegateUserObj = db.users.find(u => u.id === delegateToUserId);
     return NextResponse.json({
-      assignment: { ...assignment, userName: delegateUserObj?.name },
-      message: 'Bazaar delegated successfully. Extra bazaar count recorded on your profile.'
+      assignment,
+      message: 'Bazaar duty delegated successfully.'
     });
   } catch (error) {
     console.error('Bazaar delegation error', error);

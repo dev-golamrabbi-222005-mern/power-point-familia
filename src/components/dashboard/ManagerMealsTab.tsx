@@ -58,6 +58,8 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
   // Assign Bazaar Form
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [assignUserId, setAssignUserId] = useState('');
+  const [assignMember2Id, setAssignMember2Id] = useState('');
+  const [assignBudget, setAssignBudget] = useState('');
   const [assignDate, setAssignDate] = useState(new Date().toISOString().split('T')[0]);
   const [assignShoppingList, setAssignShoppingList] = useState('');
   const [assigning, setAssigning] = useState(false);
@@ -155,7 +157,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
   const handleAssignBazaar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignUserId || !assignDate) {
-      alert('Select member and date');
+      alert('Select primary member and date');
       return;
     }
 
@@ -169,6 +171,8 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
         },
         body: JSON.stringify({
           userId: assignUserId,
+          member2Id: assignMember2Id || undefined,
+          budget: Number(assignBudget || 0),
           date: assignDate,
           shoppingList: assignShoppingList.split(',').map(i => i.trim()).filter(i => i),
         }),
@@ -177,6 +181,8 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
       if (!res.ok) throw new Error('Bazaar assignment failed');
       setShowAssignForm(false);
       setAssignShoppingList('');
+      setAssignBudget('');
+      setAssignMember2Id('');
       fetchMealsData();
     } catch (err: any) {
       alert(err.message || 'Assignment failed');
@@ -313,14 +319,14 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Select Member
+                  Member 1 (Primary)
                 </label>
                 <select
                   value={assignUserId}
                   onChange={(e) => setAssignUserId(e.target.value)}
                   className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
                 >
-                  <option value="">-- Choose Member --</option>
+                  <option value="">-- Choose Member 1 --</option>
                   {members.map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
@@ -329,12 +335,43 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
 
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Member 2 (Partner - Optional)
+                </label>
+                <select
+                  value={assignMember2Id}
+                  onChange={(e) => setAssignMember2Id(e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                >
+                  <option value="">-- Choose Member 2 --</option>
+                  {members.filter(m => m.id !== assignUserId).map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
                   Date of Bazaar
                 </label>
                 <input
                   type="date"
                   value={assignDate}
                   onChange={(e) => setAssignDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Assigned Budget (৳)
+                </label>
+                <input
+                  type="number"
+                  value={assignBudget}
+                  onChange={(e) => setAssignBudget(e.target.value)}
+                  placeholder="e.g. 2000"
                   className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
                 />
               </div>
@@ -358,7 +395,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
               disabled={assigning}
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-50"
             >
-              {assigning ? 'Assigning...' : 'Save Bazaar Assignment'}
+              {assigning ? 'Assigning...' : 'Save Double Member Bazaar Assignment'}
             </button>
           </form>
         )}
@@ -368,8 +405,9 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
           <table className="w-full text-left text-xs md:text-sm border-collapse">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 font-bold">
-                <th className="p-3">Member</th>
+                <th className="p-3">Assigned Members</th>
                 <th className="p-3">Date</th>
+                <th className="p-3">Budget</th>
                 <th className="p-3">Shopping List</th>
                 <th className="p-3 text-right">Status</th>
               </tr>
@@ -377,16 +415,20 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {assignments.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-4 text-center text-zinc-400 text-xs">
+                  <td colSpan={5} className="p-4 text-center text-zinc-400 text-xs">
                     No bazaar assignments scheduled.
                   </td>
                 </tr>
               ) : (
                 assignments.slice(0, 10).map((a) => (
                   <tr key={a.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
-                    <td className="p-3 font-bold text-zinc-900 dark:text-white">{a.userName || 'Member'}</td>
+                    <td className="p-3 font-bold text-zinc-900 dark:text-white">
+                      {a.userName || 'Member 1'}
+                      {a.member2Name && <span className="text-orange-500 font-bold"> & {a.member2Name}</span>}
+                    </td>
                     <td className="p-3 font-medium text-zinc-600 dark:text-zinc-400">{a.date}</td>
-                    <td className="p-3 text-xs text-zinc-500 max-w-[250px] truncate">
+                    <td className="p-3 font-extrabold text-amber-500">৳{a.budget || 0}</td>
+                    <td className="p-3 text-xs text-zinc-500 max-w-[200px] truncate">
                       {a.shoppingList?.join(', ') || '--'}
                     </td>
                     <td className="p-3 text-right">
@@ -468,24 +510,25 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
                     </td>
                     <td className="p-3 text-right">
                       {exp.status === 'pending' ? (
-                        <div className="inline-flex gap-1">
+                        <div className="inline-flex gap-1.5">
                           <button
                             onClick={() => handleExpenseStatus(exp.id, 'approved')}
-                            className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-all cursor-pointer"
-                            title="Approve & Deduct Cash"
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+                            title="Accept Bajar & Deduct from Mess Cash"
                           >
-                            <Check className="w-4 h-4" />
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Accept Bajar</span>
                           </button>
                           <button
                             onClick={() => handleExpenseStatus(exp.id, 'rejected')}
-                            className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all cursor-pointer"
+                            className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all cursor-pointer"
                             title="Reject Expense"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-zinc-400 font-mono">Audited</span>
+                        <span className="text-[10px] text-zinc-400 font-mono capitalize">{exp.status}</span>
                       )}
                     </td>
                   </tr>

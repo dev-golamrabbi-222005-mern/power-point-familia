@@ -317,6 +317,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/api/finance/assign-fixed/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/finance/assign-fixed">> = Specific
+  const handler = {} as typeof import("../../src/app/api/finance/assign-fixed/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/api/finance/overview/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/finance/overview">> = Specific

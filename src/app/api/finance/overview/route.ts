@@ -33,13 +33,25 @@ export async function GET(req: NextRequest) {
       { type: 'servant_fee', label: 'Servant Fee' },
     ];
 
+    const dbUser = db.users.find(u => u.id === userId);
+    const assignedFixed = dbUser?.fixedCosts;
+    const assignedPastDue = dbUser?.pastMonthDue || 0;
+
     let totalFixedCostPaid = 0;
 
     const fixedExpenses: FixedExpenseItem[] = utilityTypes.map(({ type, label }) => {
-      // Find shared bill for this month
+      // Find shared bill for this month or manager assigned custom fixed share
       const sharedBill = db.sharedBills.find(b => b.month === currentMonth && b.type === type);
       const totalAmount = sharedBill ? sharedBill.totalAmount : 0;
-      const share = Math.round(totalAmount / memberCount);
+      
+      let share = Math.round(totalAmount / memberCount);
+      if (assignedFixed) {
+        if (type === 'rent' && assignedFixed.rent !== undefined) share = assignedFixed.rent;
+        if (type === 'electricity' && assignedFixed.electricity !== undefined) share = assignedFixed.electricity;
+        if (type === 'wifi' && assignedFixed.wifi !== undefined) share = assignedFixed.wifi;
+        if (type === 'gas' && assignedFixed.gas !== undefined) share = assignedFixed.gas;
+        if (type === 'servant_fee' && assignedFixed.servant !== undefined) share = assignedFixed.servant;
+      }
 
       // Find user payment for this bill
       const payment = db.memberBillPayments.find(
@@ -100,9 +112,12 @@ export async function GET(req: NextRequest) {
     const currentWeekNumber = Math.min(Math.ceil(currentDay / 7), 4);
     const suggestedAmount = currentWeekNumber === 1 ? 1000 : 500;
 
+    const totalAssignedFixed = fixedExpenses.reduce((sum, f) => sum + f.share, 0);
+
     const responseData: FinanceOverviewData = {
       currentMonthName,
       fixedCostPaid: totalFixedCostPaid,
+      totalAssignedFixed,
       mealCashAdded,
       estimatedTotalCost: totalFixedCostPaid + mealCashAdded,
       fixedExpenses,
@@ -110,6 +125,7 @@ export async function GET(req: NextRequest) {
       liveMealRate,
       actualMealCost,
       actualTotalCost,
+      assignedPastDue,
       isCalculationVisible,
       financeVisibilityUntil: db.settings.financeVisibilityUntil,
       weeklyMealCashGuidance: {

@@ -36,110 +36,45 @@ export default function GuestDashboard({ user, stats, token, onRefreshUser, onDe
       </div>
 
       {/* Account Status Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <div className="lg:col-span-2 bg-[#111111] border border-zinc-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
-          <div className="space-y-4">
-            <h3 className="font-display font-bold text-lg text-zinc-100 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-emerald-500" />
-              Registration Status & Workspace Info
-            </h3>
-            
-            <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/80 flex items-start gap-3">
-              <ShieldAlert className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+      <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+        <div className="space-y-4">
+          <h3 className="font-display font-bold text-lg text-zinc-100 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-emerald-500" />
+            Registration Status & Workspace Info
+          </h3>
+          
+          <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/80 flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-zinc-200">Pending Member Elevation</p>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                Only recognized Familia Members can book meals and deposit funds. Once the system Admin verifies your credentials, they will elevate your role to <strong>Member</strong>, granting full ledger access.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Your Account Credentials:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-zinc-950/50 p-3 rounded-lg border border-zinc-850/80 font-mono">
               <div>
-                <p className="text-sm font-bold text-zinc-200">Pending Member Elevation</p>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
-                  Only recognized Familia Members can book meals and deposit funds. Once the system Admin verifies your credentials, they will elevate your role to <strong>Member</strong>, granting full ledger access.
-                </p>
+                <span className="text-zinc-500">Email:</span> <span className="text-zinc-350 font-semibold">{user.email}</span>
               </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Your Account Credentials:</p>
-              <div className="grid grid-cols-2 gap-4 text-xs bg-zinc-950/50 p-3 rounded-lg border border-zinc-850/80 font-mono">
-                <div>
-                  <span className="text-zinc-500">Email:</span> <span className="text-zinc-350 font-semibold">{user.email}</span>
-                </div>
-                <div>
-                  <span className="text-zinc-500">Phone:</span> <span className="text-zinc-350 font-semibold">{user.phone}</span>
-                </div>
-                <div>
-                  <span className="text-zinc-500">Tier:</span> <span className="text-emerald-400 font-bold capitalize">{user.role}</span>
-                </div>
-                <div>
-                  <span className="text-zinc-500">Status:</span> <span className="text-emerald-400 font-bold capitalize">{user.status}</span>
-                </div>
+              <div>
+                <span className="text-zinc-500">Phone:</span> <span className="text-zinc-350 font-semibold">{user.phone}</span>
+              </div>
+              <div>
+                <span className="text-zinc-500">Tier:</span> <span className="text-emerald-400 font-bold capitalize">{user.role}</span>
+              </div>
+              <div>
+                <span className="text-zinc-500">Status:</span> <span className="text-emerald-400 font-bold capitalize">{user.status}</span>
               </div>
             </div>
           </div>
-
-          <div className="border-t border-zinc-800/85 pt-5 mt-6 flex items-center justify-between text-xs text-zinc-500">
-            <span>You can update your personal Name and Phone in the Profile Settings anytime.</span>
-          </div>
         </div>
 
-        {/* Demo Fast Sandbox Switcher */}
-        <div className="bg-[#111111] border border-zinc-800 text-zinc-100 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-zinc-800 text-emerald-400 text-[10px] font-bold rounded-full font-mono uppercase tracking-wider">
-              <Sparkles className="w-3 h-3" />
-              <span>Developer Sandbox</span>
-            </div>
-            
-            <h3 className="font-display font-bold text-lg text-white">
-              Explore Active Dashboards
-            </h3>
-            
-            <p className="text-zinc-400 text-xs leading-relaxed">
-              Skip the wait! Click below to instantly log out and swap roles to view the full spectrum of our Role-Based Access Control system:
-            </p>
-
-            <div className="space-y-2.5 pt-2">
-              <button
-                id="guest-demo-admin"
-                onClick={() => onDemoSwitch('admin@familia.com')}
-                className="w-full p-2.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-emerald-500/30 text-left rounded-xl transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div>
-                  <p className="text-xs font-bold text-white group-hover:text-emerald-400">System Admin</p>
-                  <p className="text-[10px] text-zinc-500">Configure roles & database keys</p>
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              <button
-                id="guest-demo-manager"
-                onClick={() => onDemoSwitch('manager@familia.com')}
-                className="w-full p-2.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-emerald-500/30 text-left rounded-xl transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div>
-                  <p className="text-xs font-bold text-white group-hover:text-emerald-400">Meal Manager</p>
-                  <p className="text-[10px] text-zinc-500">Post daily menus & approve deposits</p>
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              <button
-                id="guest-demo-member"
-                onClick={() => onDemoSwitch('member@familia.com')}
-                className="w-full p-2.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-emerald-500/30 text-left rounded-xl transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div>
-                  <p className="text-xs font-bold text-white group-hover:text-emerald-400">Familia Member</p>
-                  <p className="text-[10px] text-zinc-500">Book daily meals & track ledger balances</p>
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-zinc-900 text-[10px] text-zinc-500 flex items-center gap-1.5 font-mono mt-4">
-            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-            <span>Password for all: password123</span>
-          </div>
+        <div className="border-t border-zinc-800/85 pt-5 mt-6 flex items-center justify-between text-xs text-zinc-500">
+          <span>You can update your personal Name and Phone in the Profile Settings anytime.</span>
         </div>
-
       </div>
 
     </div>

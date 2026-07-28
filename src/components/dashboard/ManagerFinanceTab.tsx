@@ -59,6 +59,62 @@ export default function ManagerFinanceTab({ token, onNavigateToTickets, onError 
   const [editStatus, setEditStatus] = useState<'approved' | 'pending' | 'rejected'>('approved');
   const [editSubmitting, setEditSubmitting] = useState(false);
 
+  // Assign Fixed Costs & Dues Modal State
+  const [fixedAssignUser, setFixedAssignUser] = useState<UserType | null>(null);
+  const [assignRent, setAssignRent] = useState('');
+  const [assignElectricity, setAssignElectricity] = useState('');
+  const [assignWifi, setAssignWifi] = useState('');
+  const [assignGas, setAssignGas] = useState('');
+  const [assignServant, setAssignServant] = useState('');
+  const [assignPastDue, setAssignPastDue] = useState('');
+  const [assigningFixed, setAssigningFixed] = useState(false);
+
+  const openAssignFixedModal = (usr: UserType) => {
+    setFixedAssignUser(usr);
+    setAssignRent(usr.fixedCosts?.rent?.toString() || '');
+    setAssignElectricity(usr.fixedCosts?.electricity?.toString() || '');
+    setAssignWifi(usr.fixedCosts?.wifi?.toString() || '');
+    setAssignGas(usr.fixedCosts?.gas?.toString() || '');
+    setAssignServant(usr.fixedCosts?.servant?.toString() || '');
+    setAssignPastDue(usr.pastMonthDue?.toString() || '');
+  };
+
+  const handleSaveFixedAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fixedAssignUser) return;
+    try {
+      setAssigningFixed(true);
+      const res = await fetch('/api/finance/assign-fixed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: fixedAssignUser.id,
+          fixedCosts: {
+            rent: Number(assignRent || 0),
+            electricity: Number(assignElectricity || 0),
+            wifi: Number(assignWifi || 0),
+            gas: Number(assignGas || 0),
+            servant: Number(assignServant || 0),
+          },
+          pastMonthDue: Number(assignPastDue || 0),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to assign fixed costs');
+      alert(data.message || 'Fixed costs & due assigned successfully!');
+      setFixedAssignUser(null);
+      fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Error assigning fixed costs');
+    } finally {
+      setAssigningFixed(false);
+    }
+  };
+
   const fetchFinanceData = async () => {
     try {
       setLoading(true);
@@ -107,7 +163,9 @@ export default function ManagerFinanceTab({ token, onNavigateToTickets, onError 
 
       const rows: MemberFinanceRow[] = users.map((member) => {
         // Fixed costs share & paid
-        const fixedShare = Math.round(totalFixedMessCost / memberCount);
+        const fixedShare = member.fixedCosts?.customFixedTotal !== undefined 
+          ? member.fixedCosts.customFixedTotal 
+          : Math.round(totalFixedMessCost / memberCount);
         
         const memberPayments = deposits.filter(
           d => d.userId === member.id && d.status === 'approved' && d.remarks?.includes('Fixed Expense')
@@ -389,7 +447,20 @@ export default function ManagerFinanceTab({ token, onNavigateToTickets, onError 
 
                   <td className="p-3 text-right">
                     <div className="inline-flex items-center gap-2">
-                      {/* Send Warning Button -> Navigates to Tickets tab with pre-filled warning modal */}
+                      {/* Assign Fixed Costs Button */}
+                      <button
+                        onClick={() => {
+                          const mObj = rawUsers.find(u => u.id === row.userId);
+                          if (mObj) openAssignFixedModal(mObj);
+                        }}
+                        className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                        title="Assign Fixed Costs & Dues"
+                      >
+                        <Receipt className="w-3.5 h-3.5" />
+                        <span>Assign Costs</span>
+                      </button>
+
+                      {/* Send Warning Button */}
                       <button
                         onClick={() => onNavigateToTickets(row.userId)}
                         className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow-xs transition-all flex items-center gap-1 cursor-pointer"
@@ -418,6 +489,129 @@ export default function ManagerFinanceTab({ token, onNavigateToTickets, onError 
           </table>
         </div>
       </div>
+
+      {/* ASSIGN FIXED COSTS & DUES MODAL */}
+      {fixedAssignUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-lg w-full border border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-indigo-500" />
+                  Assign Member Fixed Costs & Dues
+                </h3>
+                <p className="text-xs text-zinc-500">Member: <strong className="text-indigo-400">{fixedAssignUser.name}</strong> ({fixedAssignUser.email})</p>
+              </div>
+              <button onClick={() => setFixedAssignUser(null)} className="text-zinc-400 hover:text-zinc-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFixedAssignment} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Basha Vara (Rent) ৳
+                  </label>
+                  <input
+                    type="number"
+                    value={assignRent}
+                    onChange={(e) => setAssignRent(e.target.value)}
+                    placeholder="e.g. 1500"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Current Bill (Electricity) ৳
+                  </label>
+                  <input
+                    type="number"
+                    value={assignElectricity}
+                    onChange={(e) => setAssignElectricity(e.target.value)}
+                    placeholder="e.g. 300"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    WiFi Bill ৳
+                  </label>
+                  <input
+                    type="number"
+                    value={assignWifi}
+                    onChange={(e) => setAssignWifi(e.target.value)}
+                    placeholder="e.g. 150"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Gas Bill ৳
+                  </label>
+                  <input
+                    type="number"
+                    value={assignGas}
+                    onChange={(e) => setAssignGas(e.target.value)}
+                    placeholder="e.g. 200"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Servant Fee ৳
+                  </label>
+                  <input
+                    type="number"
+                    value={assignServant}
+                    onChange={(e) => setAssignServant(e.target.value)}
+                    placeholder="e.g. 250"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-red-600 dark:text-red-400 mb-1">
+                    Past Month Due ৳
+                  </label>
+                  <input
+                    type="number"
+                    value={assignPastDue}
+                    onChange={(e) => setAssignPastDue(e.target.value)}
+                    placeholder="e.g. 500"
+                    className="w-full px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-xl text-xs font-bold text-red-400"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFixedAssignUser(null)}
+                  className="flex-1 py-2.5 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold rounded-xl text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={assigningFixed}
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {assigningFixed ? 'Assigning...' : 'Save Fixed Costs & Due'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* EDIT MEMBER DETAILS MODAL */}
       {editingMember && (

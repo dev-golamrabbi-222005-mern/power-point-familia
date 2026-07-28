@@ -39,7 +39,16 @@
       "status": "approved",
       "createdAt": "2026-07-21T12:35:19.562Z",
       "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C",
-      "autoBookDisabled": false
+      "autoBookDisabled": false,
+      "fixedCosts": {
+        "rent": 1935,
+        "electricity": 400,
+        "wifi": 180,
+        "gas": 200,
+        "servant": 400,
+        "customFixedTotal": 3115
+      },
+      "pastMonthDue": 230
     },
     {
       "id": "user-manager",
@@ -143,7 +152,8 @@
     "weeklyPayment": 500,
     "initialWeekPayment": 1000,
     "monthlyFlatRate": 2500,
-    "startWeekDate": "2026-07-22"
+    "startWeekDate": "2026-07-22",
+    "currentPairIndex": 0
   },
   "mealToggleLog": [
     {
@@ -166,5 +176,7 @@
       "newCount": 1,
       "timestamp": "2026-07-23T14:28:21.582Z"
     }
-  ]
+  ],
+  "monthlySummaries": [],
+  "adminChangeRequests": []
 }

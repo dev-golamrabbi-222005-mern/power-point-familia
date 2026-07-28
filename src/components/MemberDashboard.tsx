@@ -31,7 +31,7 @@ export default function MemberDashboard({ user, token, onError }: MemberDashboar
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-zinc-900">
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white mb-1">

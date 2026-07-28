@@ -196,38 +196,27 @@ export default function AdminPermissionsTab({ token, mealRate, onRefreshSettings
           </div>
         </div>
 
-        {/* Global Meal Rate Controls */}
+        {/* Live Meal Rate Display (Auto Generated) */}
         <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
               <Sliders className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-display font-bold text-base text-zinc-100">Global Meal Rate (৳ / Plate)</h3>
-              <p className="text-xs text-zinc-400">Set baseline plate rate for system cost estimations</p>
+              <h3 className="font-display font-bold text-base text-zinc-100">Live Meal Rate (Auto Calculated)</h3>
+              <p className="text-xs text-zinc-400">Formula: Mess Verified Bajar Expenses / Total Mess Meals</p>
             </div>
           </div>
 
-          <form onSubmit={handleUpdateRate} className="flex gap-3 items-end">
-            <div className="flex-1">
-              <input
-                type="number"
-                required
-                value={rateInput}
-                onChange={(e) => setRateInput(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl text-sm font-bold"
-              />
+          <div className="p-4 bg-zinc-900/80 rounded-xl border border-zinc-800 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Current Live Rate</p>
+              <p className="text-2xl font-black text-purple-400 mt-1">৳{mealRate} <span className="text-xs text-zinc-400 font-normal">/ plate</span></p>
             </div>
-            <button
-              type="submit"
-              disabled={loadingRate}
-              className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {loadingRate ? <span className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" /> : <><Save className="w-3.5 h-3.5" /> Save Rate</>}
-            </button>
-          </form>
-          {settingsSuccess && <p className="text-xs font-bold text-emerald-400">{settingsSuccess}</p>}
-          {settingsError && <p className="text-xs font-bold text-red-400">{settingsError}</p>}
+            <span className="text-xs font-bold px-3 py-1.5 bg-purple-500/15 text-purple-300 rounded-lg border border-purple-500/20">
+              Automated
+            </span>
+          </div>
         </div>
       </div>
 

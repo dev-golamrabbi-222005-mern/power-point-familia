@@ -54,13 +54,14 @@ export async function POST(req: NextRequest) {
     if (!assignment) {
       return NextResponse.json({ message: 'Bazaar assignment not found.' }, { status: 404 });
     }
-    if (assignment.userId !== user!.id && user!.role !== 'manager' && user!.role !== 'admin') {
+    if (assignment.userId !== user!.id && assignment.member2Id !== user!.id && user!.role !== 'manager' && user!.role !== 'admin') {
       return NextResponse.json({ message: 'This is not your assigned bazaar.' }, { status: 403 });
     }
 
-    // Update assignment status
+    // Update assignment status for BOTH assigned members automatically
     assignment.status = 'submitted';
     assignment.submittedAt = new Date().toISOString();
+    assignment.submittedBy = user!.id;
 
     const newExpense: BazaarExpense = {
       id: `bexp-${Date.now()}`,

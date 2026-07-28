@@ -180,21 +180,21 @@ export default function FinanceTab({ token, onError }: FinanceTabProps) {
     <div className="space-y-6">
       {/* === TOP 4 CARDS GRID === */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Fixed Cost Paid */}
+        {/* Card 1: Assigned Fixed Costs */}
         <div className="bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent dark:from-indigo-900/30 dark:via-blue-900/20 dark:to-zinc-900 p-4 rounded-xl border border-indigo-200/70 dark:border-indigo-800/60 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
-              Fixed Cost Paid
+              Assigned Fixed Costs
             </p>
             <div className="p-2 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
               <Receipt className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white">
-            ৳{data?.fixedCostPaid || 0}
+            ৳{data?.totalAssignedFixed || data?.fixedCostPaid || 0}
           </p>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Paid utilities for {data?.currentMonthName}
+            Paid: <span className="font-bold text-emerald-500">৳{data?.fixedCostPaid || 0}</span> for {data?.currentMonthName}
           </p>
         </div>
 
@@ -262,6 +262,19 @@ export default function FinanceTab({ token, onError }: FinanceTabProps) {
 
       {/* === FIXED EXPENSES BREAKDOWN SECTION === */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 md:p-6 shadow-sm">
+        {data?.assignedPastDue && data.assignedPastDue > 0 ? (
+          <div className="mb-4 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+              <div>
+                <p className="font-bold text-red-400">Past Month Due Assigned by Manager</p>
+                <p className="text-zinc-400">Please clear your past month pending balance with the Manager.</p>
+              </div>
+            </div>
+            <span className="text-sm font-extrabold text-red-400">৳{data.assignedPastDue}</span>
+          </div>
+        ) : null}
+
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
           <div>
             <h2 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">

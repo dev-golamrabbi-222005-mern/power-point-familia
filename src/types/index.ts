@@ -11,6 +11,15 @@ export interface User {
   bazaarCount: number; // Tracks how many bazaar duties this user has done
   autoBookDisabled?: boolean; // Member-level opt-out from auto-booking
   previousMonthCarryForward?: number; // Opening balance carry forward from previous month
+  pastMonthDue?: number; // Past month assigned due amount
+  fixedCosts?: {
+    rent?: number;
+    electricity?: number;
+    wifi?: number;
+    gas?: number;
+    servant?: number;
+    customFixedTotal?: number;
+  };
   pushSubscriptions?: any[]; // Array of Web Push Notification subscriptions
 }
 
@@ -57,13 +66,17 @@ export interface BazaarPair {
 export interface BazaarAssignment {
   id: string;
   userId: string;
+  member2Id?: string; // Second assigned member for double member bajar duty
   date: string; // YYYY-MM-DD
   shoppingList: string[]; // Items the manager requests
+  budget?: number; // Manager assigned budget for the bajar
   status: 'pending' | 'submitted' | 'verified' | 'skipped';
   submittedAt?: string;
+  submittedBy?: string; // userId of member who submitted the actual cost
   delegatedFrom?: string; // userId of the person who delegated this to someone else
   bazaarPairId?: string; // Links to a BazaarPair
-  userName?: string; // Hydrated
+  userName?: string; // Hydrated Member 1
+  member2Name?: string; // Hydrated Member 2
 }
 
 export interface BazaarExpense {
@@ -336,6 +349,7 @@ export interface FixedExpenseItem {
 export interface FinanceOverviewData {
   currentMonthName: string;
   fixedCostPaid: number;
+  totalAssignedFixed?: number;
   mealCashAdded: number;
   estimatedTotalCost: number;
   fixedExpenses: FixedExpenseItem[];
@@ -343,6 +357,7 @@ export interface FinanceOverviewData {
   liveMealRate: number;
   actualMealCost: number;
   actualTotalCost: number;
+  assignedPastDue?: number;
   isCalculationVisible: boolean;
   financeVisibilityUntil?: string;
   weeklyMealCashGuidance: {
@@ -378,6 +393,12 @@ export interface BazaarDutyInfo {
   budget?: number;
   assignmentId?: string;
   status?: string;
+  submittedDetails?: {
+    submittedByName?: string;
+    totalCost?: number;
+    items?: { name: string; cost: number }[];
+    submittedAt?: string;
+  };
 }
 
 // === MANAGER DASHBOARD NEW TYPES ===

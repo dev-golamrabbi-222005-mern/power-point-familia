@@ -27,6 +27,51 @@ export default function CalendarTab({ token, onError }: CalendarTabProps) {
   const [bazaarDuty, setBazaarDuty] = useState<BazaarDutyInfo | null>(null);
   const [dutyLoading, setDutyLoading] = useState(false);
 
+  // Bajar Expense Submission State
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [bazaarItemsInput, setBazaarItemsInput] = useState('');
+  const [bazaarTotalCostInput, setBazaarTotalCostInput] = useState('');
+  const [submittingExpense, setSubmittingExpense] = useState(false);
+
+  const handleSubmitBazaarExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bazaarDuty?.assignmentId) return;
+
+    try {
+      setSubmittingExpense(true);
+      const parsedItems = bazaarItemsInput.split(',').map(i => {
+        const parts = i.trim().split('-');
+        const name = parts[0]?.trim() || i.trim();
+        const cost = Number(parts[1]?.trim() || 0);
+        return { name, cost };
+      }).filter(i => i.name);
+
+      const res = await fetch('/api/bazaar/expense', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          assignmentId: bazaarDuty.assignmentId,
+          date: bazaarDuty.date,
+          items: parsedItems.length > 0 ? parsedItems : [{ name: 'Bazaar Items', cost: Number(bazaarTotalCostInput || 0) }],
+          totalCost: Number(bazaarTotalCostInput || 0),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Submission failed');
+      alert(data.message || 'Bajar expense submitted successfully!');
+      setShowSubmitModal(false);
+      fetchBazaarDuty(bazaarDuty.date);
+    } catch (err: any) {
+      alert(err.message || 'Error submitting expense');
+    } finally {
+      setSubmittingExpense(false);
+    }
+  };
+
   const fetchActivities = async () => {
     try {
       setLoading(true);
@@ -268,6 +313,34 @@ export default function CalendarTab({ token, onError }: CalendarTabProps) {
                 </div>
               </div>
             )}
+
+            {/* Submission Status & Action */}
+            {bazaarDuty.submittedDetails || bazaarDuty.status === 'submitted' || bazaarDuty.status === 'verified' ? (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-1 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="font-extrabold text-emerald-400 uppercase tracking-wider">
+                    {bazaarDuty.status === 'verified' ? '✓ Verified & Accepted by Manager' : '✓ Submitted (Awaiting Manager Acceptance)'}
+                  </span>
+                  <span className="font-black text-emerald-300 text-sm">৳{bazaarDuty.submittedDetails?.totalCost || 0}</span>
+                </div>
+                {bazaarDuty.submittedDetails?.submittedByName && (
+                  <p className="text-zinc-400">Submitted by: <strong className="text-emerald-300">{bazaarDuty.submittedDetails.submittedByName}</strong></p>
+                )}
+                {bazaarDuty.submittedDetails?.items && bazaarDuty.submittedDetails.items.length > 0 && (
+                  <p className="text-zinc-500 truncate">Items: {bazaarDuty.submittedDetails.items.map(i => `${i.name} (${i.cost}৳)`).join(', ')}</p>
+                )}
+              </div>
+            ) : (
+              <div className="pt-2">
+                <button
+                  onClick={() => setShowSubmitModal(true)}
+                  className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Submit Bajar Cost & List</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           /* NO BAZAAR DUTY (HOLIDAY) */
@@ -365,6 +438,71 @@ export default function CalendarTab({ token, onError }: CalendarTabProps) {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUBMIT BAJAR EXPENSE MODAL */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-orange-500" />
+                Submit Bajar List & Actual Cost
+              </h3>
+              <button onClick={() => setShowSubmitModal(false)} className="text-zinc-400 hover:text-zinc-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitBazaarExpense} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Purchased Items & Individual Costs
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bazaarItemsInput}
+                  onChange={(e) => setBazaarItemsInput(e.target.value)}
+                  placeholder="e.g. Chicken - 600, Rice - 400, Oil - 200, Veggies - 150"
+                  className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-white"
+                />
+                <p className="text-[10px] text-zinc-500 mt-1">Format: ItemName - Cost (Comma separated)</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Total Actual Bajar Cost (৳)
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={bazaarTotalCostInput}
+                  onChange={(e) => setBazaarTotalCostInput(e.target.value)}
+                  placeholder="e.g. 1350"
+                  className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm font-bold text-orange-500"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSubmitModal(false)}
+                  className="flex-1 py-2.5 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold rounded-xl text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingExpense}
+                  className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {submittingExpense ? 'Submitting...' : 'Submit Bajar Cost'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
