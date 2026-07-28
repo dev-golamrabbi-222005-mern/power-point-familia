@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
       const bazaarData = bazaarExpenses.map(exp => {
         const userData = db.users.find(u => u.id === exp.userId);
-        const itemsInfo = exp.items.map(i => `${i.name} (₹${i.cost})`).join(', ');
+        const itemsInfo = exp.items.map(i => `${i.name} (৳${i.cost})`).join(', ');
         return {
           userId: exp.userId,
           userName: userData?.name || 'Unknown',

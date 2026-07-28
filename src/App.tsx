@@ -226,8 +226,8 @@ export default function App() {
                     x2="100%"
                     y2="100%"
                   >
-                    <stop offset="0%" stop-color="#0F172A" />
-                    <stop offset="100%" stop-color="#1E293B" />
+                    <stop offset="0%" stopColor="#0F172A" />
+                    <stop offset="100%" stopColor="#1E293B" />
                   </linearGradient>
 
                   <linearGradient
@@ -237,8 +237,8 @@ export default function App() {
                     x2="100%"
                     y2="100%"
                   >
-                    <stop offset="0%" stop-color="#38BDF8" />
-                    <stop offset="100%" stop-color="#0284C7" />
+                    <stop offset="0%" stopColor="#38BDF8" />
+                    <stop offset="100%" stopColor="#0284C7" />
                   </linearGradient>
 
                   <linearGradient
@@ -248,8 +248,8 @@ export default function App() {
                     x2="100%"
                     y2="100%"
                   >
-                    <stop offset="0%" stop-color="#FB923C" />
-                    <stop offset="100%" stop-color="#EA580C" />
+                    <stop offset="0%" stopColor="#FB923C" />
+                    <stop offset="100%" stopColor="#EA580C" />
                   </linearGradient>
 
                   <filter
@@ -263,8 +263,8 @@ export default function App() {
                       dx="0"
                       dy="8"
                       stdDeviation="6"
-                      flood-color="#000000"
-                      flood-opacity="0.3"
+                      floodColor="#000000"
+                      floodOpacity="0.3"
                     />
                   </filter>
                 </defs>
@@ -277,8 +277,8 @@ export default function App() {
                   r="140"
                   fill="none"
                   stroke="#334155"
-                  stroke-width="4"
-                  stroke-dasharray="8 8"
+                  strokeWidth="4"
+                  strokeDasharray="8 8"
                 />
 
                 <g filter="url(#dropShadow)">
@@ -286,9 +286,9 @@ export default function App() {
                     d="M 140 180 L 250 80 L 360 180"
                     fill="none"
                     stroke="url(#primaryGrad)"
-                    stroke-width="18"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeWidth="18"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
 
                   <circle
@@ -297,7 +297,7 @@ export default function App() {
                     r="65"
                     fill="#0F172A"
                     stroke="url(#primaryGrad)"
-                    stroke-width="12"
+                    strokeWidth="12"
                   />
                   <circle
                     cx="250"
@@ -305,21 +305,21 @@ export default function App() {
                     r="45"
                     fill="none"
                     stroke="#334155"
-                    stroke-width="3"
-                    stroke-dasharray="4 4"
+                    strokeWidth="3"
+                    strokeDasharray="4 4"
                   />
 
                   <path
                     d="M 230 205 V 230 M 224 205 V 218 M 236 205 V 218"
                     stroke="url(#accentGrad)"
-                    stroke-width="4"
-                    stroke-linecap="round"
+                    strokeWidth="4"
+                    strokeLinecap="round"
                   />
                   <path
                     d="M 270 230 V 215 A 8 10 0 0 0 270 198 A 8 10 0 0 0 270 215"
                     fill="url(#accentGrad)"
                     stroke="url(#accentGrad)"
-                    stroke-width="2"
+                    strokeWidth="2"
                   />
 
                   <path
@@ -328,7 +328,7 @@ export default function App() {
                   />
                 </g>
 
-                <g text-anchor="middle">
+                <g textAnchor="middle">
                   <rect
                     x="180"
                     y="320"
@@ -340,11 +340,11 @@ export default function App() {
                   <text
                     x="250"
                     y="344"
-                    font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                    font-size="18"
-                    font-weight="900"
+                    fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                    fontSize="18"
+                    fontWeight="900"
                     fill="#FFFFFF"
-                    letter-spacing="4"
+                    letterSpacing="4"
                   >
                     PPF
                   </text>
@@ -352,22 +352,22 @@ export default function App() {
                   <text
                     x="250"
                     y="395"
-                    font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                    font-size="24"
-                    font-weight="800"
+                    fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                    fontSize="24"
+                    fontWeight="800"
                     fill="#F8FAFC"
-                    letter-spacing="2"
+                    letterSpacing="2"
                   >
                     POWER POINT
                   </text>
                   <text
                     x="250"
                     y="425"
-                    font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-                    font-size="16"
-                    font-weight="600"
+                    fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                    fontSize="16"
+                    fontWeight="600"
                     fill="#38BDF8"
-                    letter-spacing="6"
+                    letterSpacing="6"
                   >
                     FAMILIA
                   </text>

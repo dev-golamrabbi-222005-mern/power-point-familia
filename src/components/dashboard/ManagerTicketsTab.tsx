@@ -1,0 +1,478 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { 
+  ClipboardList, 
+  Check, 
+  X, 
+  Search, 
+  Send, 
+  AlertCircle, 
+  CheckCircle2, 
+  Clock, 
+  DollarSign, 
+  Receipt, 
+  Wallet,
+  AlertTriangle,
+  User
+} from 'lucide-react';
+import { Deposit, RefundRequest, User as UserType } from '@/src/types';
+
+interface ManagerTicketsTabProps {
+  token: string;
+  onError?: (msg: string) => void;
+  onRefreshData?: () => void;
+  prefillWarnUserId?: string | null;
+}
+
+export default function ManagerTicketsTab({ token, onError, onRefreshData, prefillWarnUserId }: ManagerTicketsTabProps) {
+  const [deposits, setDeposits] = useState<(Deposit & { userEmail?: string })[]>([]);
+  const [refunds, setRefunds] = useState<RefundRequest[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filters
+  const [ticketFilter, setTicketFilter] = useState<'pending' | 'all'>('pending');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Warning modal state
+  const [isWarnModalOpen, setIsWarnModalOpen] = useState(false);
+  const [targetUserId, setTargetUserId] = useState('');
+  const [warnTitle, setWarnTitle] = useState('Payment Deadline Warning');
+  const [warnMessage, setWarnMessage] = useState('');
+  const [warnDeadline, setWarnDeadline] = useState('');
+  const [warnCategory, setWarnCategory] = useState<'Payment Overdue' | 'Meal Cash Dues' | 'Bazaar Notice'>('Payment Overdue');
+  const [warnSubmitting, setWarnSubmitting] = useState(false);
+  const [warnSuccess, setWarnSuccess] = useState('');
+
+  const fetchTickets = async () => {
+    try {
+      setLoading(true);
+      const [depRes, refRes, usersRes] = await Promise.all([
+        fetch('/api/deposits', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/refunds', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/members', { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+
+      if (depRes.ok) setDeposits(await depRes.json());
+      if (refRes.ok) setRefunds(await refRes.json());
+      if (usersRes.ok) setUsers(await usersRes.json());
+    } catch (err) {
+      console.error('Error fetching tickets', err);
+      onError?.('Failed to load tickets');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, [token]);
+
+  useEffect(() => {
+    if (prefillWarnUserId) {
+      setTargetUserId(prefillWarnUserId);
+      setIsWarnModalOpen(true);
+    }
+  }, [prefillWarnUserId]);
+
+  const handleDepositAction = async (id: string, status: 'approved' | 'rejected') => {
+    try {
+      const res = await fetch(`/api/deposits/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error('Status update failed');
+      fetchTickets();
+      onRefreshData?.();
+    } catch (err: any) {
+      alert(err.message || 'Action failed');
+    }
+  };
+
+  const handleRefundAction = async (id: string, status: 'approved' | 'rejected') => {
+    try {
+      const res = await fetch(`/api/refunds/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error('Refund status update failed');
+      fetchTickets();
+      onRefreshData?.();
+    } catch (err: any) {
+      alert(err.message || 'Action failed');
+    }
+  };
+
+  const handleSendWarning = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetUserId) {
+      alert('Please select a member to warn');
+      return;
+    }
+    if (!warnMessage.trim()) {
+      alert('Please enter warning message');
+      return;
+    }
+
+    try {
+      setWarnSubmitting(true);
+      const res = await fetch('/api/tickets/warn', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetUserId,
+          title: warnTitle,
+          message: warnMessage,
+          deadlineDate: warnDeadline,
+          category: warnCategory,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to issue warning ticket');
+
+      setWarnSuccess('Warning ticket issued successfully to member!');
+      setTimeout(() => {
+        setIsWarnModalOpen(false);
+        setWarnSuccess('');
+        setWarnMessage('');
+        fetchTickets();
+      }, 1500);
+    } catch (err: any) {
+      alert(err.message || 'Error sending warning ticket');
+    } finally {
+      setWarnSubmitting(false);
+    }
+  };
+
+  const filteredDeposits = deposits.filter((d) => {
+    const matchesFilter = ticketFilter === 'all' || d.status === 'pending';
+    const userName = users.find(u => u.id === d.userId)?.name || d.userName || '';
+    const matchesSearch = !searchQuery || userName.toLowerCase().includes(searchQuery.toLowerCase()) || d.transactionId.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-8 h-8 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p className="text-xs text-zinc-400">Loading Tickets...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header & Warning Issuer Banner */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-emerald-500" />
+            Member Tickets & Payment Requests
+          </h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Verify payment tickets, deposits, fixed utility payments, and issue warnings
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            setTargetUserId(users[0]?.id || '');
+            setIsWarnModalOpen(true);
+          }}
+          className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+        >
+          <Send className="w-4 h-4" />
+          <span>Issue Warning / Deadline Ticket</span>
+        </button>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setTicketFilter('pending')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              ticketFilter === 'pending'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+            }`}
+          >
+            Pending Tickets ({deposits.filter(d => d.status === 'pending').length})
+          </button>
+          <button
+            onClick={() => setTicketFilter('all')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+              ticketFilter === 'all'
+                ? 'bg-emerald-500 text-white shadow-sm'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+            }`}
+          >
+            All Tickets
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-2.5" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search member or Trx ID..."
+            className="pl-9 pr-3 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-emerald-500 w-full sm:w-60"
+          />
+        </div>
+      </div>
+
+      {/* Tickets List / Table */}
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 md:p-6 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs md:text-sm border-collapse">
+            <thead>
+              <tr className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 font-bold">
+                <th className="p-3">Member</th>
+                <th className="p-3">Ticket Type / Date</th>
+                <th className="p-3">Payment Method</th>
+                <th className="p-3">Trx ID / Ref</th>
+                <th className="p-3">Amount</th>
+                <th className="p-3">Remarks / Details</th>
+                <th className="p-3 text-center">Status</th>
+                <th className="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {filteredDeposits.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-6 text-center text-zinc-400 text-xs">
+                    No tickets found matching the filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredDeposits.map((dep) => {
+                  const member = users.find((u) => u.id === dep.userId);
+                  const isNotice = dep.paymentMethod === 'Notice / Warning';
+
+                  return (
+                    <tr key={dep.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                      <td className="p-3">
+                        <p className="font-bold text-zinc-900 dark:text-white">
+                          {member ? member.name : dep.userName || 'Member'}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 font-mono">
+                          {member?.email || dep.userEmail || ''}
+                        </p>
+                      </td>
+
+                      <td className="p-3 font-semibold text-zinc-700 dark:text-zinc-300">
+                        {isNotice ? (
+                          <span className="text-amber-500 font-bold">Warning Notice</span>
+                        ) : dep.remarks?.includes('Fixed Expense') ? (
+                          <span className="text-indigo-600 dark:text-indigo-400 font-bold">Fixed Utility Ticket</span>
+                        ) : (
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">Meal Cash Ticket</span>
+                        )}
+                        <p className="text-[10px] text-zinc-400 font-normal">
+                          {new Date(dep.date).toLocaleDateString()}
+                        </p>
+                      </td>
+
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 font-bold text-[11px] rounded text-zinc-700 dark:text-zinc-300">
+                          {dep.paymentMethod}
+                        </span>
+                      </td>
+
+                      <td className="p-3 font-mono text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                        {dep.transactionId}
+                      </td>
+
+                      <td className="p-3 font-extrabold text-zinc-900 dark:text-white">
+                        ৳{dep.amount}
+                      </td>
+
+                      <td className="p-3 text-xs text-zinc-500 dark:text-zinc-400 max-w-[200px] truncate" title={dep.remarks}>
+                        {dep.remarks || '--'}
+                      </td>
+
+                      <td className="p-3 text-center">
+                        {dep.status === 'approved' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Approved
+                          </span>
+                        ) : dep.status === 'rejected' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-full border border-red-500/20">
+                            <X className="w-3 h-3" />
+                            Rejected
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full border border-amber-500/20">
+                            <Clock className="w-3 h-3 animate-pulse" />
+                            Pending
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="p-3 text-right">
+                        {dep.status === 'pending' ? (
+                          <div className="inline-flex gap-1.5">
+                            <button
+                              onClick={() => handleDepositAction(dep.id, 'approved')}
+                              className="p-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-all cursor-pointer shadow-xs"
+                              title="Accept & Add to Cash / Paid Status"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDepositAction(dep.id, 'rejected')}
+                              className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all cursor-pointer shadow-xs"
+                              title="Reject Ticket"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-zinc-400 font-mono">Processed</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* WARNING MODAL */}
+      {isWarnModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden">
+            <div className="p-4 md:p-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+                    Issue Warning / Deadline Ticket
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Send warning notice to member
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setIsWarnModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendWarning} className="p-4 md:p-5 space-y-4">
+              {warnSuccess ? (
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                  <p className="text-sm font-bold text-emerald-900 dark:text-emerald-200">{warnSuccess}</p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Target Member
+                    </label>
+                    <select
+                      value={targetUserId}
+                      onChange={(e) => setTargetUserId(e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
+                    >
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.role})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={warnCategory}
+                      onChange={(e: any) => setWarnCategory(e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="Payment Overdue">Payment Overdue</option>
+                      <option value="Meal Cash Dues">Meal Cash Dues</option>
+                      <option value="Bazaar Notice">Bazaar Notice</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Warning Title
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={warnTitle}
+                      onChange={(e) => setWarnTitle(e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Payment Deadline Date
+                    </label>
+                    <input
+                      type="date"
+                      value={warnDeadline}
+                      onChange={(e) => setWarnDeadline(e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm font-semibold text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Message / Notice Details
+                    </label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={warnMessage}
+                      onChange={(e) => setWarnMessage(e.target.value)}
+                      placeholder="Enter warning instructions for member..."
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={warnSubmitting}
+                    className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {warnSubmitting ? 'Sending Warning...' : 'Send Warning Ticket'}
+                  </button>
+                </>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

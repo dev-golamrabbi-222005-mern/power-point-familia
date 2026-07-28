@@ -4,9 +4,6 @@ import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
-    const { error } = authenticate(req);
-    if (error) return error;
-
     await ensureDbInit();
     const db = getDb();
     return NextResponse.json(db.settings || { mealRate: 45 });

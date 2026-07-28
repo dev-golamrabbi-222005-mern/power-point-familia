@@ -124,7 +124,9 @@ export default function OverviewTab({ token, onError }: OverviewTabProps) {
           <p className="text-2xl md:text-3xl font-bold text-green-900 dark:text-green-100">
             {overview?.todayMyMeals || 0}
           </p>
-          <p className="text-xs text-green-600 dark:text-green-400 mt-1">meals</p>
+          <p className="text-xs font-medium text-green-700 dark:text-green-300 mt-1">
+            Lunch: {overview?.todayMyLunch || 0} | Dinner: {overview?.todayMyDinner || 0}
+          </p>
         </div>
 
         {/* Today's Mess Meal */}
@@ -138,7 +140,9 @@ export default function OverviewTab({ token, onError }: OverviewTabProps) {
           <p className="text-2xl md:text-3xl font-bold text-orange-900 dark:text-orange-100">
             {overview?.todayMessMeals || 0}
           </p>
-          <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">meals</p>
+          <p className="text-xs font-medium text-orange-700 dark:text-orange-300 mt-1">
+            Lunch: {overview?.todayMessLunch || 0} | Dinner: {overview?.todayMessDinner || 0}
+          </p>
         </div>
 
         {/* Live Meal Rate */}
@@ -150,7 +154,7 @@ export default function OverviewTab({ token, onError }: OverviewTabProps) {
             <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-red-600 dark:text-red-400" />
           </div>
           <p className="text-2xl md:text-3xl font-bold text-red-900 dark:text-red-100">
-            ₹{overview?.liveMealRate || 0}
+            ৳{overview?.liveMealRate || 0}
           </p>
           <p className="text-xs text-red-600 dark:text-red-400 mt-1">per meal</p>
         </div>
@@ -200,7 +204,7 @@ export default function OverviewTab({ token, onError }: OverviewTabProps) {
                     tick={{ fontSize: 12, fill: '#6b7280' }}
                   />
                   <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
-                  <Tooltip formatter={(value) => `₹${value}`} />
+                  <Tooltip formatter={(value) => `৳${value}`} />
                   <Legend wrapperStyle={{ paddingTop: '10px' }} />
                   <Bar dataKey="myMealCost" fill="#3b82f6" name="My Meal" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="messMealCost" fill="#8b5cf6" name="Mess Meal" radius={[4, 4, 0, 0]} />
@@ -217,19 +221,19 @@ export default function OverviewTab({ token, onError }: OverviewTabProps) {
                 <div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">My Cost</p>
                   <p className="text-base md:text-lg font-bold text-zinc-900 dark:text-white">
-                    ₹{activeChart === 'weekly' ? chartData.weeklyAgg.myTotalCost : chartData.monthlyAgg.myTotalCost}
+                    ৳{activeChart === 'weekly' ? chartData.weeklyAgg.myTotalCost : chartData.monthlyAgg.myTotalCost}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Mess Cost</p>
                   <p className="text-base md:text-lg font-bold text-zinc-900 dark:text-white">
-                    ₹{activeChart === 'weekly' ? chartData.weeklyAgg.messTotalCost : chartData.monthlyAgg.messTotalCost}
+                    ৳{activeChart === 'weekly' ? chartData.weeklyAgg.messTotalCost : chartData.monthlyAgg.messTotalCost}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">My Meal</p>
                   <p className="text-base md:text-lg font-bold text-zinc-900 dark:text-white">
-                    ₹{activeChart === 'weekly' ? chartData.weeklyAgg.myMealCost : chartData.monthlyAgg.myMealCost}
+                    ৳{activeChart === 'weekly' ? chartData.weeklyAgg.myMealCost : chartData.monthlyAgg.myMealCost}
                   </p>
                 </div>
               </div>

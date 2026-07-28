@@ -5,9 +5,6 @@ import { MealMenu, MealRecord } from '@/src/types';
 
 export async function GET(req: NextRequest) {
   try {
-    const { error } = authenticate(req);
-    if (error) return error;
-
     await ensureDbInit();
     const db = getDb();
     return NextResponse.json(db.menus);

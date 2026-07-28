@@ -25,7 +25,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ message: 'Expense not found.' }, { status: 404 });
     }
 
+    const prevStatus = db.bazaarExpenses[expenseIndex].status;
     db.bazaarExpenses[expenseIndex].status = status;
+
+    // Deduct expense from manager cash in hand if newly approved
+    if (status === 'approved' && prevStatus !== 'approved') {
+      const expenseAmount = db.bazaarExpenses[expenseIndex].totalCost || 0;
+      (db.settings as any).totalCashInHand = Math.max(0, ((db.settings as any).totalCashInHand || 0) - expenseAmount);
+    }
 
     // Also update the corresponding assignment
     const assignment = db.bazaarAssignments.find(
@@ -41,14 +48,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const currentPair = db.bazaarPairs[currentPairIndex % db.bazaarPairs.length];
       
       if (currentPair && (assignment.userId === currentPair.member1Id || assignment.userId === currentPair.member2Id)) {
-        // Check if both members are resolved (verified OR skipped)
         const pairMembers = [currentPair.member1Id, currentPair.member2Id];
         const allResolved = pairMembers.every(memberId => 
           db.bazaarAssignments.some(a => a.userId === memberId && (a.status === 'verified' || a.status === 'skipped'))
         );
 
         if (allResolved) {
-          // Both members done — advance to next pair
           const oldIndex = db.settings.currentPairIndex;
           db.settings.currentPairIndex = (oldIndex + 1) % db.bazaarPairs.length;
           

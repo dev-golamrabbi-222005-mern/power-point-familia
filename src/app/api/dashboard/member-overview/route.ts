@@ -29,23 +29,39 @@ export async function GET(req: NextRequest) {
       .reduce((sum, r) => sum + r.count, 0);
 
     // Today's my meal
-    const todayMyMeals = db.records
-      .filter(r => r.userId === userId && r.date === today)
+    const todayMyLunch = db.records
+      .filter(r => r.userId === userId && r.date === today && r.mealType === 'lunch')
       .reduce((sum, r) => sum + r.count, 0);
+
+    const todayMyDinner = db.records
+      .filter(r => r.userId === userId && r.date === today && r.mealType === 'dinner')
+      .reduce((sum, r) => sum + r.count, 0);
+
+    const todayMyMeals = todayMyLunch + todayMyDinner;
 
     // Mess total meal (all members)
     const messTotalMeals = allMealsCount;
 
     // Today's mess meal
-    const todayMessMeals = db.records
-      .filter(r => r.date === today)
+    const todayMessLunch = db.records
+      .filter(r => r.date === today && r.mealType === 'lunch')
       .reduce((sum, r) => sum + r.count, 0);
+
+    const todayMessDinner = db.records
+      .filter(r => r.date === today && r.mealType === 'dinner')
+      .reduce((sum, r) => sum + r.count, 0);
+
+    const todayMessMeals = todayMessLunch + todayMessDinner;
 
     return NextResponse.json({
       myTotalMeals,
       todayMyMeals,
+      todayMyLunch,
+      todayMyDinner,
       messTotalMeals,
       todayMessMeals,
+      todayMessLunch,
+      todayMessDinner,
       liveMealRate,
       today,
     });

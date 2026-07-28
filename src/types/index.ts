@@ -230,8 +230,12 @@ export interface MonthlySummary {
 export interface MemberOverviewData {
   myTotalMeals: number;
   todayMyMeals: number;
+  todayMyLunch: number;
+  todayMyDinner: number;
   messTotalMeals: number;
   todayMessMeals: number;
+  todayMessLunch: number;
+  todayMessDinner: number;
   liveMealRate: number;
   today: string;
 }
@@ -246,6 +250,21 @@ export interface MealCostData {
   messMealCost: number;
   messLivingCost: number;
   messTotalCost: number;
+}
+
+export interface AdminChangeRequest {
+  id: string;
+  managerId: string;
+  managerName: string;
+  targetUserId: string;
+  targetUserName: string;
+  type: 'edit_cost' | 'edit_meal' | 'edit_balance';
+  details: string;
+  oldValue?: any;
+  newValue?: any;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  resolvedAt?: string;
 }
 
 export interface MealCostAggregates {
@@ -359,5 +378,39 @@ export interface BazaarDutyInfo {
   budget?: number;
   assignmentId?: string;
   status?: string;
+}
+
+// === MANAGER DASHBOARD NEW TYPES ===
+
+export interface FixedBillItem {
+  type: FixedUtilityType;
+  label: string;
+  totalAmount: number;
+  memberShare: number;
+  paidAmount: number;
+  paidCount: number;
+  memberCount: number;
+  status: 'paid' | 'partial' | 'unpaid';
+  dueDate: string;
+}
+
+export interface ManagerOverviewData {
+  messTotalMealsToday: number;
+  messTotalMealsMonth: number;
+  mealCostThisWeek: number;
+  mealCostThisMonth: number;
+  liveMealRate: number;
+  today: string;
+  fixedBills: FixedBillItem[];
+  pastMonthComparison: PastMonthComparisonData[];
+}
+
+export interface PastMonthComparisonData {
+  month: string;
+  label: string;
+  messMeals: number;
+  mealCost: number;
+  fixedCost: number;
+  totalCost: number;
 }
 

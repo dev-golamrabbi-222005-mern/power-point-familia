@@ -23,11 +23,13 @@ export default function DashboardPage() {
   const [activeRoleView, setActiveRoleView] = useState<'manager' | 'member'>('manager');
 
   const fetchSystemData = async () => {
+    if (!token) return;
     try {
-      const menuRes = await fetch('/api/menu');
+      const headers = { Authorization: `Bearer ${token}` };
+      const menuRes = await fetch('/api/menu', { headers });
       if (menuRes.ok) setMenus(await menuRes.json());
 
-      const settingsRes = await fetch('/api/settings');
+      const settingsRes = await fetch('/api/settings', { headers });
       if (settingsRes.ok) {
         const sData = await settingsRes.json();
         setMealRate(sData.mealRate || 45);

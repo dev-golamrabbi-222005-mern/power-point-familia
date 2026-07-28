@@ -176,8 +176,8 @@ export async function GET(req: NextRequest) {
         currentMonthFixedCost: currentBills.reduce((sum, bill) => sum + bill.totalAmount, 0),
         currentMonthFixedCostShare: totalShare,
         currentMonthMealCashAdded: db.deposits
-          .filter(d => d.status === 'approved' && d.type === 'meal_cash' && d.date.startsWith(currentMonth))
-          .reduce((sum, d) => sum + d.amount, 0),
+          .filter(d => d.status === 'approved' && !d.remarks?.includes('Fixed Expense') && d.date && d.date.startsWith(currentMonth))
+          .reduce((sum, d) => sum + (d.amount || 0), 0),
         financeVisibilityUntil: db.settings.financeVisibilityUntil,
         bazaarRotationOrder: approvedMembers.map(m => ({
           userId: m.id,

@@ -1,0 +1,196 @@
+import React, { useState } from 'react';
+import { User, UserRole } from '@/src/types';
+import { Users, Search, RefreshCw, ShieldCheck, CheckCircle2, ShieldAlert } from 'lucide-react';
+
+interface AdminUserDirectoryTabProps {
+  currentUser: User;
+  token: string;
+  allUsers: User[];
+  loadingUsers: boolean;
+  onRefreshData: () => void;
+}
+
+export default function AdminUserDirectoryTab({ currentUser, token, allUsers, loadingUsers, onRefreshData }: AdminUserDirectoryTabProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const handleUpdateUserRoleAndStatus = async (targetId: string, newRole: UserRole, newStatus: User['status']) => {
+    if (targetId === currentUser.id) {
+      alert('You cannot modify your own superuser role!');
+      return;
+    }
+    setUpdatingId(targetId);
+    try {
+      const response = await fetch(`/api/members/${targetId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ role: newRole, status: newStatus })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to update.');
+      onRefreshData();
+    } catch (err: any) {
+      alert(err.message || 'Error updating user.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const filteredUsers = allUsers.filter(u => {
+    const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (u.phone && u.phone.includes(searchQuery));
+    const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
+
+  return (
+    <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-6 shadow-sm space-y-5">
+      {/* Header & Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-800 pb-4">
+        <div>
+          <h3 className="font-display font-bold text-lg text-zinc-100 flex items-center gap-2">
+            <Users className="w-5 h-5 text-emerald-500" /> User Directory & Access Control
+          </h3>
+          <p className="text-xs text-zinc-400">Admin control panel for user roles, verification, and access levels</p>
+        </div>
+        <button
+          onClick={onRefreshData}
+          disabled={loadingUsers}
+          className="p-2 border border-zinc-800 rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+        >
+          <RefreshCw className={`w-4 h-4 ${loadingUsers ? 'animate-spin' : ''}`} />
+          <span>Refresh Directory</span>
+        </button>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-3" />
+          <input
+            type="text"
+            placeholder="Search by name, email, or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-zinc-500 font-bold">Filter:</span>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-2 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-xl text-xs font-bold cursor-pointer"
+          >
+            <option value="all">All Roles</option>
+            <option value="user">Guests (Pending)</option>
+            <option value="member">Members</option>
+            <option value="manager">Managers</option>
+            <option value="admin">Admins</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Directory Table */}
+      <div className="overflow-x-auto max-h-[500px] overflow-y-auto border border-zinc-800/80 rounded-xl">
+        <table className="w-full text-left text-sm border-collapse">
+          <thead className="sticky top-0 bg-zinc-900 text-zinc-400 font-mono text-[10px] uppercase tracking-wider z-10">
+            <tr className="border-b border-zinc-800">
+              <th className="py-3 px-4">User</th>
+              <th className="py-3 px-3">Contact</th>
+              <th className="py-3 px-3">Role</th>
+              <th className="py-3 px-3">Status</th>
+              <th className="py-3 px-4 text-right">Admin Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-800/50">
+            {filteredUsers.map((usr) => (
+              <tr key={usr.id} className="hover:bg-zinc-900/40 transition-colors">
+                <td className="py-3 px-4">
+                  <p className="font-bold text-zinc-100 flex items-center gap-2">
+                    {usr.name}
+                    {usr.id === currentUser.id && (
+                      <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md uppercase">
+                        Superuser (Me)
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[11px] text-zinc-500 font-mono">{usr.email}</p>
+                </td>
+                <td className="py-3 px-3 text-xs text-zinc-400 font-mono">{usr.phone || 'N/A'}</td>
+                <td className="py-3 px-3">
+                  <select
+                    disabled={usr.id === currentUser.id || updatingId === usr.id}
+                    value={usr.role}
+                    onChange={(e) => handleUpdateUserRoleAndStatus(usr.id, e.target.value as UserRole, usr.status)}
+                    className="px-2.5 py-1 bg-zinc-900 border border-zinc-700/60 rounded-lg text-xs font-bold text-zinc-200 disabled:opacity-50 cursor-pointer"
+                  >
+                    <option value="user">Guest</option>
+                    <option value="member">Member</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </td>
+                <td className="py-3 px-3">
+                  <select
+                    disabled={usr.id === currentUser.id || updatingId === usr.id}
+                    value={usr.status}
+                    onChange={(e) => handleUpdateUserRoleAndStatus(usr.id, usr.role, e.target.value as any)}
+                    className={`px-2.5 py-1 border rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50 ${
+                      usr.status === 'approved'
+                        ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400'
+                        : usr.status === 'rejected'
+                        ? 'bg-red-500/15 border-red-500/25 text-red-400'
+                        : 'bg-amber-500/15 border-amber-500/25 text-amber-400'
+                    }`}
+                  >
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </td>
+                <td className="py-3 px-4 text-right">
+                  {usr.id === currentUser.id ? (
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Superuser</span>
+                  ) : (
+                    <div className="flex justify-end gap-1.5 text-[11px] font-bold">
+                      {usr.role === 'user' && (
+                        <button
+                          onClick={() => handleUpdateUserRoleAndStatus(usr.id, 'member', 'approved')}
+                          className="px-2.5 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/25 rounded-lg cursor-pointer transition-all"
+                        >
+                          Accept
+                        </button>
+                      )}
+                      {usr.role === 'member' && (
+                        <button
+                          onClick={() => handleUpdateUserRoleAndStatus(usr.id, 'manager', 'approved')}
+                          className="px-2.5 py-1 bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/25 rounded-lg cursor-pointer transition-all"
+                        >
+                          Promote to Manager
+                        </button>
+                      )}
+                      {usr.role === 'manager' && (
+                        <button
+                          onClick={() => handleUpdateUserRoleAndStatus(usr.id, 'member', 'approved')}
+                          className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 rounded-lg cursor-pointer transition-all"
+                        >
+                          Demote to Member
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

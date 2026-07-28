@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { MongoClient } from 'mongodb';
-import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest, MonthlySummary, MealToggleLog } from '../types';
+import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest, MonthlySummary, MealToggleLog, AdminChangeRequest } from '../types';
 
 export interface DatabaseSchema {
   users: (User & { passwordHash: string })[];
@@ -19,6 +19,7 @@ export interface DatabaseSchema {
   refundRequests: RefundRequest[];
   monthlySummaries: MonthlySummary[];
   mealToggleLog?: MealToggleLog[];
+  adminChangeRequests?: AdminChangeRequest[];
   settings: SystemSettings;
 }
 
@@ -42,9 +43,24 @@ let client: MongoClient | null = null;
 let dbInstance: any = null;
 let memoryDb: DatabaseSchema | null = null;
 
+export function getCleanMongoUri(): string | null {
+  const raw = process.env.MONGODB_URI;
+  if (!raw) return null;
+  const clean = raw.trim().replace(/;$/, '').replace(/^["']|["']$/g, '');
+  if (!clean.startsWith('mongodb://') && !clean.startsWith('mongodb+srv://')) {
+    return null;
+  }
+  return clean;
+}
+
 export async function getMongoClient() {
+  const uri = getCleanMongoUri();
+  if (!uri) throw new Error('Invalid or missing MONGODB_URI');
   if (!client) {
-    client = new MongoClient(MONGODB_URI);
+    client = new MongoClient(uri, {
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000,
+    });
     await client.connect();
     dbInstance = client.db(DB_NAME);
     console.log(`Successfully connected to MongoDB database: ${DB_NAME}`);
@@ -57,17 +73,14 @@ async function syncCollection(colName: string, localItems: any[]) {
     const db = await getMongoClient();
     const col = db.collection(colName);
     
-    // 1. Upsert all current local items
     for (const item of localItems) {
       await col.replaceOne({ id: item.id }, item, { upsert: true });
     }
     
-    // 2. Delete any items in Mongo that are no longer in local items
     const localIds = localItems.map(item => item.id);
     await col.deleteMany({ id: { $nin: localIds } });
   } catch (error) {
     console.error(`Error syncing collection ${colName}:`, error);
-    throw error;
   }
 }
 
@@ -78,33 +91,17 @@ async function syncSettings(settings: SystemSettings) {
     await col.replaceOne({}, settings, { upsert: true });
   } catch (error) {
     console.error('Error syncing settings:', error);
-    throw error;
   }
 }
 
 export async function seedMongo(data: DatabaseSchema): Promise<void> {
   try {
     const db = await getMongoClient();
-    
-    // Insert initial users
-    if (data.users.length > 0) {
-      await db.collection('users').insertMany(data.users);
-    }
-    // Insert initial menus
-    if (data.menus.length > 0) {
-      await db.collection('menus').insertMany(data.menus);
-    }
-    // Insert initial records
-    if (data.records.length > 0) {
-      await db.collection('records').insertMany(data.records);
-    }
-    // Insert initial deposits
-    if (data.deposits.length > 0) {
-      await db.collection('deposits').insertMany(data.deposits);
-    }
-    // Insert initial settings
+    if (data.users.length > 0) await db.collection('users').insertMany(data.users);
+    if (data.menus.length > 0) await db.collection('menus').insertMany(data.menus);
+    if (data.records.length > 0) await db.collection('records').insertMany(data.records);
+    if (data.deposits.length > 0) await db.collection('deposits').insertMany(data.deposits);
     await db.collection('settings').insertOne(data.settings);
-    
     console.log('Seeded default data successfully to MongoDB.');
   } catch (error) {
     console.error('Error seeding default data to MongoDB:', error);
@@ -113,6 +110,8 @@ export async function seedMongo(data: DatabaseSchema): Promise<void> {
 
 export async function syncToMongo(data: DatabaseSchema): Promise<void> {
   try {
+    const uri = getCleanMongoUri();
+    if (!uri) return;
     await syncCollection('users', data.users);
     await syncCollection('menus', data.menus);
     await syncCollection('records', data.records);
@@ -127,7 +126,6 @@ export async function syncToMongo(data: DatabaseSchema): Promise<void> {
     await syncCollection('refundRequests', data.refundRequests || []);
     await syncCollection('monthlySummaries', data.monthlySummaries || []);
     await syncSettings(data.settings);
-    console.log('Successfully synchronized database changes to MongoDB.');
   } catch (error) {
     console.error('Failed to synchronize database with MongoDB:', error);
   }
@@ -135,6 +133,12 @@ export async function syncToMongo(data: DatabaseSchema): Promise<void> {
 
 export async function initMongoConnection(): Promise<void> {
   try {
+    const uri = getCleanMongoUri();
+    if (!uri) {
+      console.log('No valid MONGODB_URI configured. Using local db.json storage.');
+      memoryDb = getDb();
+      return;
+    }
     const db = await getMongoClient();
     
     const mongoUsers = await db.collection('users').find({}).toArray();
@@ -214,19 +218,43 @@ export async function initMongoConnection(): Promise<void> {
 }
 
 export function getDb(): DatabaseSchema {
+  let res: DatabaseSchema;
   if (memoryDb) {
-    return memoryDb;
+    res = memoryDb;
+  } else if (!fs.existsSync(DB_FILE)) {
+    res = initDb();
+  } else {
+    try {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      res = JSON.parse(raw);
+    } catch (error) {
+      console.error('Error reading database file, resetting to default.', error);
+      res = initDb();
+    }
   }
-  if (!fs.existsSync(DB_FILE)) {
-    return initDb();
+
+  // Ensure all arrays are initialized to prevent undefined crash
+  res.users = res.users || [];
+  res.menus = res.menus || [];
+  res.records = res.records || [];
+  res.deposits = res.deposits || [];
+  res.bazaarAssignments = res.bazaarAssignments || [];
+  res.bazaarExpenses = res.bazaarExpenses || [];
+  res.bazaarPairs = res.bazaarPairs || [];
+  res.weeklyPayments = res.weeklyPayments || [];
+  res.contactMessages = res.contactMessages || [];
+  res.sharedBills = res.sharedBills || [];
+  res.memberBillPayments = res.memberBillPayments || [];
+  res.refundRequests = res.refundRequests || [];
+  res.monthlySummaries = res.monthlySummaries || [];
+  res.mealToggleLog = res.mealToggleLog || [];
+  res.adminChangeRequests = res.adminChangeRequests || [];
+  res.settings = res.settings || DEFAULT_SETTINGS;
+  if (typeof res.settings.currentPairIndex !== 'number') {
+    res.settings.currentPairIndex = 0;
   }
-  try {
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch (error) {
-    console.error('Error reading database file, resetting to default.', error);
-    return initDb();
-  }
+
+  return res;
 }
 
 export function saveDb(data: DatabaseSchema): void {

@@ -13,8 +13,11 @@ export default function AdminDashboardPage() {
   const [mealRate, setMealRate] = useState<number>(45);
 
   const fetchSystemData = async () => {
+    if (!token) return;
     try {
-      const settingsRes = await fetch('/api/settings');
+      const settingsRes = await fetch('/api/settings', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (settingsRes.ok) {
         const sData = await settingsRes.json();
         setMealRate(sData.mealRate || 45);

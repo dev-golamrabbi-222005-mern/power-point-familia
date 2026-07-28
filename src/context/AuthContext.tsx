@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {
     const storedToken = localStorage.getItem('familia_token');
