@@ -26,7 +26,7 @@ export default function GuestDashboard({ user, stats, token, onRefreshUser, onDe
             <Clock className="w-3.5 h-3.5" />
             <span>Awaiting Approval</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-display font-extrabold">
+          <h2 className="section-title">
             Hello, {user.name}!
           </h2>
           <p className="text-emerald-50 text-sm">

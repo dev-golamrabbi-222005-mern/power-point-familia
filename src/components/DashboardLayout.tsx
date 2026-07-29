@@ -113,7 +113,7 @@ export default function DashboardLayout({ user, token, stats, onLogout, onProfil
       )}
 
       {/* Main Container Area with Profile panel slide */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-8">
+      <main className="flex-1 dashboard-container py-8">
         
         {/* Profile Settings Panel */}
         {showProfileSettings && (
@@ -232,15 +232,6 @@ export default function DashboardLayout({ user, token, stats, onLogout, onProfil
         {/* Dashboard Panels Body */}
         {children}
       </main>
-
-      {/* Footer */}
-      <footer className="bg-[#09090b] border-t border-zinc-800/85 py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-zinc-500 font-mono">
-          <p>© 2026 Power Point Familia Meal System. All rights reserved.</p>
-          <p className="mt-1 text-[10px] text-zinc-600">Strictly Isolated RBAC Enterprise Workspace (PORT: 3000)</p>
-        </div>
-      </footer>
-
     </div>
   );
 }

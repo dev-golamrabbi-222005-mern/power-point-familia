@@ -2,21 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, MealMenu, SystemSettings } from '../types';
-import ManagerOverviewTab from './dashboard/ManagerOverviewTab';
-import ManagerTicketsTab from './dashboard/ManagerTicketsTab';
-import ManagerMealsTab from './dashboard/ManagerMealsTab';
-import ManagerFinanceTab from './dashboard/ManagerFinanceTab';
-import ManagerHistoryTab from './dashboard/ManagerHistoryTab';
-import { 
-  TrendingUp, 
-  ClipboardList, 
-  ChefHat, 
-  DollarSign, 
-  History, 
-  RefreshCw, 
-  CalendarDays, 
-  Utensils 
-} from 'lucide-react';
+import ManagerOverviewTab from './dashboard/(manager)/ManagerOverviewTab';
+import { TrendingUp, RefreshCw } from 'lucide-react';
 
 interface ManagerDashboardProps {
   user: User;
@@ -26,18 +13,17 @@ interface ManagerDashboardProps {
   onRefreshMenus: () => void;
 }
 
-export type ManagerTabType = 'overview' | 'tickets' | 'meals' | 'finances' | 'history';
-
-export default function ManagerDashboard({ user, token, menus, mealRate, onRefreshMenus }: ManagerDashboardProps) {
-  const [activeTab, setActiveTab] = useState<ManagerTabType>('overview');
-  const [prefillWarnUserId, setPrefillWarnUserId] = useState<string | null>(null);
-
-  // Auto-book toggle & settings state
+export default function ManagerDashboard({
+  user,
+  token,
+  menus,
+  mealRate,
+  onRefreshMenus,
+}: ManagerDashboardProps) {
   const [autoBookEnabled, setAutoBookEnabled] = useState(true);
   const [autoBookLoading, setAutoBookLoading] = useState(false);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
 
-  // Month end reset status
   const [resetStatusMsg, setResetStatusMsg] = useState('');
   const [initiateResetLoading, setInitiateResetLoading] = useState(false);
 
@@ -62,28 +48,6 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
     fetchSettings();
   }, [token]);
 
-  const handleToggleAutoBook = async () => {
-    try {
-      setAutoBookLoading(true);
-      const nextVal = !autoBookEnabled;
-      const res = await fetch('/api/settings/auto-book', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ autoBookMeals: nextVal }),
-      });
-      if (res.ok) {
-        setAutoBookEnabled(nextVal);
-      }
-    } catch (err) {
-      console.error('Auto book toggle error', err);
-    } finally {
-      setAutoBookLoading(false);
-    }
-  };
-
   const handleInitiateMonthEnd = async () => {
     if (!window.confirm('Initiate Month-End Reset calculation and submit request to Admin?')) return;
     try {
@@ -106,21 +70,6 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
     }
   };
 
-  const handleNavigateToTicketsWithWarning = (userId?: string) => {
-    if (userId) {
-      setPrefillWarnUserId(userId);
-    }
-    setActiveTab('tickets');
-  };
-
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: TrendingUp },
-    { id: 'tickets', label: 'Tickets', icon: ClipboardList },
-    { id: 'meals', label: 'Meals & Bazaar', icon: ChefHat },
-    { id: 'finances', label: 'Finances', icon: DollarSign },
-    { id: 'history', label: 'History', icon: History },
-  ] as const;
-
   return (
     <div className="space-y-6">
       {/* Permanent Month-End Reset Control Banner */}
@@ -139,7 +88,9 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
             <p className="text-xs text-zinc-400">
               Calculate total month expenses, live meal rate, member carry-forward balances, and send request to Admin.
             </p>
-            {resetStatusMsg && <p className="text-xs text-emerald-400 font-bold mt-1">{resetStatusMsg}</p>}
+            {resetStatusMsg && (
+              <p className="text-xs text-emerald-400 font-bold mt-1">{resetStatusMsg}</p>
+            )}
           </div>
         </div>
         <button
@@ -159,66 +110,18 @@ export default function ManagerDashboard({ user, token, menus, mealRate, onRefre
             <TrendingUp className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Manager Control Center</p>
+            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+              Manager Control Center
+            </p>
             <p className="text-lg md:text-xl font-black text-zinc-100">
-              Power Point Familia Manager Workspace
+              Power Point Familia Manager Overview
             </p>
           </div>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-1.5 bg-zinc-900 p-1.5 rounded-xl border border-zinc-800 overflow-x-auto">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              setActiveTab(tab.id as ManagerTabType);
-              if (tab.id !== 'tickets') setPrefillWarnUserId(null);
-            }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === tab.id
-                ? 'bg-emerald-500 text-zinc-950 shadow-md font-black'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 border border-transparent'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* === TAB CONTENTS === */}
-      {activeTab === 'overview' && (
-        <ManagerOverviewTab token={token} onError={(msg) => console.error(msg)} />
-      )}
-
-      {activeTab === 'tickets' && (
-        <ManagerTicketsTab
-          token={token}
-          onRefreshData={() => {}}
-          prefillWarnUserId={prefillWarnUserId}
-        />
-      )}
-
-      {activeTab === 'meals' && (
-        <ManagerMealsTab
-          token={token}
-          menus={menus}
-          onRefreshMenus={onRefreshMenus}
-        />
-      )}
-
-      {activeTab === 'finances' && (
-        <ManagerFinanceTab
-          token={token}
-          onNavigateToTickets={handleNavigateToTicketsWithWarning}
-        />
-      )}
-
-      {activeTab === 'history' && (
-        <ManagerHistoryTab token={token} />
-      )}
+      {/* Manager Overview Content */}
+      <ManagerOverviewTab token={token} onError={(msg) => console.error(msg)} />
     </div>
   );
 }

@@ -210,9 +210,9 @@ export default function App() {
       {/* Brand Header for Landing page */}
       {!user && (
         <nav className="bg-[#0f0f0f]/95 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-40 py-4 shadow-xl shadow-black/15">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-              {/* Could be used this logo as a Banner  */}
-              {/* <svg
+          <div className="max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center">
+            {/* Could be used this logo as a Banner  */}
+            {/* <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 500 500"
                 width="100%"
@@ -373,8 +373,7 @@ export default function App() {
                   </text>
                 </g>
               </svg> */}
-              <Logo/>
-   
+            <Logo />
 
             <div className="flex items-center gap-3">
               <a
@@ -456,10 +455,10 @@ export default function App() {
       {/* Global Landing Footer */}
       {!user && (
         <footer className="bg-[#09090b] border-t border-zinc-800/85 py-10 mt-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center">
-                      <Logo />
-                    </div>
+              <Logo />
+            </div>
 
             <div className="flex items-center gap-6">
               <a

@@ -7,14 +7,14 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-zinc-100">
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="container-custom section-gap">
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold rounded-full mb-4">
             <Heart className="w-3.5 h-3.5" />
             <span>About Our Platform</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-display font-extrabold tracking-tight text-zinc-100 mb-4">
+          <h1 className="section-title text-center mb-4">
             Power Point <span className="text-emerald-500">Familia</span>
           </h1>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">

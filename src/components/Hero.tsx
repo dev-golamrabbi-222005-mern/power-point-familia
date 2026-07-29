@@ -1,7 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Utensils, Shield, CheckCircle2, TrendingUp, Users, ArrowRight, Sparkles, BookOpen, ShoppingCart, X, CalendarDays, Receipt, Eye, Image as ImageIcon, Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { HeroBanner } from "./hero/HeroBanner";
+import { HeroBazaarPairBanner } from "./hero/HeroBazaarPairBanner";
+import { HeroFeaturesGrid } from "./hero/HeroFeaturesGrid";
+import {
+  Utensils,
+  Shield,
+  CheckCircle2,
+  TrendingUp,
+  Users,
+  ArrowRight,
+  Sparkles,
+  BookOpen,
+  ShoppingCart,
+  X,
+  CalendarDays,
+  Receipt,
+  Eye,
+  Image as ImageIcon,
+  Sun,
+  Moon,
+} from "lucide-react";
 
-import { MealMenu, BazaarAssignment, BazaarExpense } from '../types';
+import { MealMenu, BazaarAssignment, BazaarExpense } from "../types";
 
 interface HeroProps {
   onLoginClick: () => void;
@@ -11,26 +31,47 @@ interface HeroProps {
   mealRate: number;
 }
 
-export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus, mealRate }: HeroProps) {
-  const todayDate = new Date().toISOString().split('T')[0];
-  const todayMenus = menus.filter(m => m.date === todayDate);
+export default function Hero({
+  onLoginClick,
+  onRegisterClick,
+  onDemoLogin,
+  menus,
+  mealRate,
+}: HeroProps) {
+  const todayDate = new Date().toISOString().split("T")[0];
+  const todayMenus = menus.filter((m) => m.date === todayDate);
 
-  const [bazaarAssignments, setBazaarAssignments] = useState<(BazaarAssignment & { userName?: string })[]>([]);
-  const [bazaarExpenses, setBazaarExpenses] = useState<(BazaarExpense & { userName?: string })[]>([]);
+  const [bazaarAssignments, setBazaarAssignments] = useState<
+    (BazaarAssignment & { userName?: string })[]
+  >([]);
+  const [bazaarExpenses, setBazaarExpenses] = useState<
+    (BazaarExpense & { userName?: string })[]
+  >([]);
   const [bazaarPairData, setBazaarPairData] = useState<any>(null);
-  const [mealSummary, setMealSummary] = useState<{ date: string; lunch: number; dinner: number }[]>([]);
+  const [mealSummary, setMealSummary] = useState<
+    { date: string; lunch: number; dinner: number }[]
+  >([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch public calendar data
     const fetchCalendarData = async () => {
       try {
-        const res = await fetch('/api/public/calendar');
+        const res = await fetch("/api/public/calendar");
         if (res.ok) {
           const data = await res.json();
           setBazaarAssignments(data.assignments || []);
           setBazaarExpenses(data.expenses || []);
-          setBazaarPairData(data.currentPair ? { currentPair: data.currentPair, nextPair: data.nextPair, pairs: data.pairs, currentPairIndex: data.currentPairIndex } : null);
+          setBazaarPairData(
+            data.currentPair
+              ? {
+                  currentPair: data.currentPair,
+                  nextPair: data.nextPair,
+                  pairs: data.pairs,
+                  currentPairIndex: data.currentPairIndex,
+                }
+              : null,
+          );
           setMealSummary(data.mealSummary || []);
         }
       } catch (e) {
@@ -46,178 +87,66 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
   const currentYear = today.getFullYear();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
-  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const monthDates = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
-    return `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   });
 
   // Get full activity info for a specific date
   const getDayInfo = (date: string) => {
-    const assignments = bazaarAssignments.filter(a => a.date === date);
-    const expenses = bazaarExpenses.filter(e => e.date === date);
-    const dayMenus = menus.filter(m => m.date === date);
+    const assignments = bazaarAssignments.filter((a) => a.date === date);
+    const expenses = bazaarExpenses.filter((e) => e.date === date);
+    const dayMenus = menus.filter((m) => m.date === date);
     const totalSpent = expenses.reduce((s, e) => s + e.totalCost, 0);
-    const dayNames = assignments.map(a => a.userName).filter(Boolean);
-    const dayMealSummary = mealSummary.find(m => m.date === date);
-    const hasReceipt = expenses.some(e => !!e.receiptImage);
-    return { assignments, expenses, menus: dayMenus, totalSpent, assignedTo: dayNames, mealCounts: dayMealSummary, hasReceipt };
+    const dayNames = assignments.map((a) => a.userName).filter(Boolean);
+    const dayMealSummary = mealSummary.find((m) => m.date === date);
+    const hasReceipt = expenses.some((e) => !!e.receiptImage);
+    return {
+      assignments,
+      expenses,
+      menus: dayMenus,
+      totalSpent,
+      assignedTo: dayNames,
+      mealCounts: dayMealSummary,
+      hasReceipt,
+    };
   };
 
   // Enlarge popup for receipt images
   const [enlargedReceipt, setEnlargedReceipt] = useState<string | null>(null);
 
   return (
-    <div id="home-landing" className="relative overflow-hidden pt-12 pb-24 bg-[#0a0a0a]">
+    <div
+      id="home-landing"
+      className="relative overflow-hidden bg-[#0a0a0a]"
+    >
       {/* Decorative background lights */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl -z-10" />
 
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          <div className="lg:col-span-7 space-y-8 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold rounded-full shadow-sm tracking-wider uppercase">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Cohesive Meal Management Ecosystem</span>
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight text-zinc-100 leading-none">
-              Smart dining, <br />
-              <span className="italic font-serif text-emerald-500">Perfectly managed</span> <br />
-              for your familia.
-            </h1>
-
-            <p className="text-lg text-zinc-400 leading-relaxed max-w-xl">
-              Power Point Familia coordinates meal schedules, daily menus, and financial balances with absolute transparent data isolation. Built for families, shared apartments, and small organizations.
-            </p>
-
-            <div className="flex flex-wrap gap-4 pt-2">
-              <button
-                id="btn-register-hero"
-                onClick={onRegisterClick}
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-xl shadow-lg shadow-emerald-950/20 transition-all duration-150 flex items-center gap-2 cursor-pointer"
-              >
-                Get Started
-                <ArrowRight className="w-5 h-5" />
-              </button>
-              <button
-                id="btn-login-hero"
-                onClick={onLoginClick}
-                className="px-6 py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 font-medium border border-zinc-800 rounded-xl shadow-sm transition-all duration-150 cursor-pointer"
-              >
-                Sign In
-              </button>
-            </div>
-
-            {/* Quick stats banner */}
-            <div className="grid grid-cols-3 gap-4 border-t border-zinc-800/80 pt-8 mt-12">
-              <div>
-                <p className="text-3xl font-light text-zinc-100">{mealRate}৳</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Standard Meal Rate</p>
-              </div>
-              <div>
-                <p className="text-3xl font-light text-zinc-100">4 Tiers</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">RBAC Access Levels</p>
-              </div>
-              <div>
-                <p className="text-3xl font-light text-zinc-100">100%</p>
-                <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Food Waste Free</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 flex justify-start lg:justify-end">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#0F172A" />
-      <stop offset="100%" stopColor="#1E293B" />
-    </linearGradient>
-
-    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#38BDF8" />
-      <stop offset="100%" stopColor="#0284C7" />
-    </linearGradient>
-
-    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#FB923C" />
-      <stop offset="100%" stopColor="#EA580C" />
-    </linearGradient>
-
-    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#000000" floodOpacity="0.3" />
-    </filter>
-  </defs>
-
-  <rect width="500" height="500" rx="80" fill="url(#bgGrad)" />
-
-  <circle cx="250" cy="210" r="140" fill="none" stroke="#334155" strokeWidth="4" strokeDasharray="8 8" />
-
-  <g filter="url(#dropShadow)">
-    <path d="M 140 180 L 250 80 L 360 180" fill="none" stroke="url(#primaryGrad)" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="250" cy="225" r="65" fill="#0F172A" stroke="url(#primaryGrad)" strokeWidth="12" />
-    <circle cx="250" cy="225" r="45" fill="none" stroke="#334155" strokeWidth="3" strokeDasharray="4 4" />
-
-    <path d="M 230 205 V 230 M 224 205 V 218 M 236 205 V 218" stroke="url(#accentGrad)" strokeWidth="4" strokeLinecap="round" />
-    <path d="M 270 230 V 215 A 8 10 0 0 0 270 198 A 8 10 0 0 0 270 215" fill="url(#accentGrad)" stroke="url(#accentGrad)" strokeWidth="2" />
-
-    <path d="M 250 60 L 242 82 L 258 78 Z" fill="url(#accentGrad)" />
-  </g>
-
-  <g textAnchor="middle">
-    <rect x="180" y="320" width="140" height="36" rx="18" fill="url(#accentGrad)" />
-    <text x="250" y="344" fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" fontSize="18" fontWeight="900" fill="#FFFFFF" letterSpacing="4">PPF</text>
-
-    <text x="250" y="395" fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" fontSize="24" fontWeight="700" fill="#F8FAFC" letterSpacing="2">POWER POINT</text>
-    <text x="250" y="425" fontFamily="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" fontSize="22" fontWeight="900" fill="#38BDF8" letterSpacing="6">FAMILIA</text>
-  </g>
-</svg>
-
-          </div>
-        </div>
-      </div>
+      {/* Hero Section Banner */}
+      <HeroBanner
+        mealRate={mealRate}
+        onLoginClick={onLoginClick}
+        onRegisterClick={onRegisterClick}
+      />
 
       {/* Current Bazaar Pair */}
-      {bazaarPairData && bazaarPairData.currentPair && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-          <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/5 border border-blue-500/20 rounded-2xl p-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-500/15 rounded-xl">
-                <Users className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Current Bazaar Pair</p>
-                <p className="text-lg font-black text-zinc-100">
-                  {bazaarPairData.currentPair.member1Name} <span className="text-zinc-500 text-sm">&</span> {bazaarPairData.currentPair.member2Name}
-                </p>
-                {bazaarPairData.nextPair && (
-                  <p className="text-[10px] text-zinc-500 mt-0.5">
-                    Next up: {bazaarPairData.nextPair.member1Name} & {bazaarPairData.nextPair.member2Name}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-[10px] text-blue-400 font-bold">ACTIVE</span>
-            </div>
-          </div>
-        </div>
-      )}
+      <HeroBazaarPairBanner bazaarPairData={bazaarPairData} />
 
-        {/* Bazaar Calendar Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
+      {/* Bazaar Calendar Section */}
+      <div className="container-custom section-gap">
         <div className="text-center max-w-3xl mx-auto mb-10">
-          <h2 className="text-3xl font-extrabold text-zinc-100 tracking-tight sm:text-4xl flex items-center justify-center gap-3">
+          <h2 className="section-title flex items-center justify-center gap-3">
             <ShoppingCart className="w-8 h-8 text-emerald-500" />
             Bazaar & Expenses Calendar
           </h2>
           <p className="mt-3 text-zinc-400">
-            View upcoming bazaar schedules, expenses, and purchase details at a glance.
-            Click on any date to see what was bought and how much was spent.
+            View upcoming bazaar schedules, expenses, and purchase details at a
+            glance. Click on any date to see what was bought and how much was
+            spent.
           </p>
         </div>
 
@@ -225,22 +154,32 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
         <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
             <CalendarDays className="w-5 h-5 text-emerald-500" />
-            <h3 className="font-display font-bold text-lg text-zinc-100">Activity Calendar</h3>
-            <span className="ml-auto text-xs text-zinc-500">{new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
+            <h3 className="font-display font-bold text-lg text-zinc-100">
+              Activity Calendar
+            </h3>
+            <span className="ml-auto text-xs text-zinc-500">
+              {new Date().toLocaleDateString(undefined, {
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
           </div>
 
           <div className="overflow-x-auto -mx-2 px-2 pb-1">
-          {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2 min-w-[420px] sm:min-w-0">
-            {weekdays.map((day) => (
-              <div key={day} className="text-center text-[10px] font-bold text-zinc-500 uppercase tracking-wider py-1">
-                {day}
-              </div>
-            ))}
-          </div>
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1 mb-2 min-w-[420px] sm:min-w-0">
+              {weekdays.map((day) => (
+                <div
+                  key={day}
+                  className="text-center text-[10px] font-bold text-zinc-500 uppercase tracking-wider py-1"
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
 
-          {/* Full Month Grid */}
-          <div className="grid grid-cols-7 gap-1 min-w-[420px] sm:min-w-0">
+            {/* Full Month Grid */}
+            <div className="grid grid-cols-7 gap-1 min-w-[420px] sm:min-w-0">
               {/* Empty cells for days before the 1st */}
               {Array.from({ length: firstDayOfWeek }).map((_, i) => (
                 <div key={`empty-${i}`} />
@@ -249,44 +188,82 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
               {monthDates.map((date) => {
                 const dayNum = new Date(date).getDate();
                 const info = getDayInfo(date);
-                const isPast = new Date(date) < new Date(new Date().toDateString());
-                const isToday = date === new Date().toISOString().split('T')[0];
-                const hasActivity = info.assignments.length > 0 || info.expenses.length > 0 || info.menus.length > 0 || (info.mealCounts && (info.mealCounts.lunch > 0 || info.mealCounts.dinner > 0));
+                const isPast =
+                  new Date(date) < new Date(new Date().toDateString());
+                const isToday = date === new Date().toISOString().split("T")[0];
+                const hasActivity =
+                  info.assignments.length > 0 ||
+                  info.expenses.length > 0 ||
+                  info.menus.length > 0 ||
+                  (info.mealCounts &&
+                    (info.mealCounts.lunch > 0 || info.mealCounts.dinner > 0));
 
                 return (
                   <button
                     key={date}
-                    onClick={() => setSelectedDate(selectedDate === date ? null : date)}
+                    onClick={() =>
+                      setSelectedDate(selectedDate === date ? null : date)
+                    }
                     className={`relative p-1.5 rounded-lg border text-left transition-all duration-200 min-h-[60px] sm:min-h-[72px] cursor-pointer ${
                       isToday
-                        ? 'bg-emerald-500/15 border-emerald-500/40 ring-1 ring-emerald-500/20'
+                        ? "bg-emerald-500/15 border-emerald-500/40 ring-1 ring-emerald-500/20"
                         : isPast && !hasActivity
-                        ? 'bg-zinc-900/10 border-transparent opacity-30'
-                        : 'bg-zinc-900/40 border-zinc-800/60 hover:border-emerald-500/30 hover:bg-zinc-900/60'
-                    } ${selectedDate === date ? 'ring-2 ring-emerald-500/30' : ''} ${!hasActivity ? 'pointer-events-none' : ''}`}
+                          ? "bg-zinc-900/10 border-transparent opacity-30"
+                          : "bg-zinc-900/40 border-zinc-800/60 hover:border-emerald-500/30 hover:bg-zinc-900/60"
+                    } ${selectedDate === date ? "ring-2 ring-emerald-500/30" : ""} ${!hasActivity ? "pointer-events-none" : ""}`}
                   >
-                    <span className={`text-[10px] sm:text-[11px] font-bold ${isToday ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                    <span
+                      className={`text-[10px] sm:text-[11px] font-bold ${isToday ? "text-emerald-400" : "text-zinc-400"}`}
+                    >
                       {dayNum}
                     </span>
                     <div className="flex flex-col gap-px mt-0.5">
                       {info.assignments.length > 0 && (
-                        <span className="text-[6px] sm:text-[7px] text-emerald-400 font-bold leading-tight truncate">🛒 {info.assignments.length}</span>
+                        <span className="text-[6px] sm:text-[7px] text-emerald-400 font-bold leading-tight truncate">
+                          🛒 {info.assignments.length}
+                        </span>
                       )}
                       {info.totalSpent > 0 && (
                         <span className="text-[6px] sm:text-[7px] text-amber-400 font-bold leading-tight truncate">
-                          💰{info.totalSpent}৳{info.hasReceipt && '📎'}
+                          💰{info.totalSpent}৳{info.hasReceipt && "📎"}
                         </span>
                       )}
                       {info.menus.length > 0 && (
                         <span className="text-[6px] sm:text-[7px] text-teal-400 font-bold leading-tight truncate">
-                          🍽️ {info.menus.filter(m => m.mealType === 'lunch').length > 0 ? 'L' : ''}{info.menus.filter(m => m.mealType === 'lunch').length > 0 && info.menus.filter(m => m.mealType === 'dinner').length > 0 ? '+' : ''}{info.menus.filter(m => m.mealType === 'dinner').length > 0 ? 'D' : ''}
+                          🍽️{" "}
+                          {info.menus.filter((m) => m.mealType === "lunch")
+                            .length > 0
+                            ? "L"
+                            : ""}
+                          {info.menus.filter((m) => m.mealType === "lunch")
+                            .length > 0 &&
+                          info.menus.filter((m) => m.mealType === "dinner")
+                            .length > 0
+                            ? "+"
+                            : ""}
+                          {info.menus.filter((m) => m.mealType === "dinner")
+                            .length > 0
+                            ? "D"
+                            : ""}
                         </span>
                       )}
-                      {info.mealCounts && (info.mealCounts.lunch > 0 || info.mealCounts.dinner > 0) && (
-                        <span className="text-[6px] sm:text-[7px] text-purple-400 font-bold leading-tight truncate">
-                          📊 {info.mealCounts.lunch > 0 ? info.mealCounts.lunch : ''}{info.mealCounts.lunch > 0 && info.mealCounts.dinner > 0 ? '/' : ''}{info.mealCounts.dinner > 0 ? info.mealCounts.dinner : ''}
-                        </span>
-                      )}
+                      {info.mealCounts &&
+                        (info.mealCounts.lunch > 0 ||
+                          info.mealCounts.dinner > 0) && (
+                          <span className="text-[6px] sm:text-[7px] text-purple-400 font-bold leading-tight truncate">
+                            📊{" "}
+                            {info.mealCounts.lunch > 0
+                              ? info.mealCounts.lunch
+                              : ""}
+                            {info.mealCounts.lunch > 0 &&
+                            info.mealCounts.dinner > 0
+                              ? "/"
+                              : ""}
+                            {info.mealCounts.dinner > 0
+                              ? info.mealCounts.dinner
+                              : ""}
+                          </span>
+                        )}
                     </div>
                   </button>
                 );
@@ -298,34 +275,54 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
 
       {/* Enlarged Receipt Modal */}
       {enlargedReceipt && (
-        <div className="fixed inset-0 bg-[#0a0a0a]/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onClick={() => setEnlargedReceipt(null)}>
-          <div className="relative max-w-2xl w-full max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-[#0a0a0a]/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60]"
+          onClick={() => setEnlargedReceipt(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setEnlargedReceipt(null)}
               className="absolute -top-3 -right-3 p-1.5 bg-zinc-900 border border-zinc-700 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors z-10 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
-            <img src={enlargedReceipt} alt="Receipt full size" className="w-full h-auto rounded-2xl shadow-2xl border border-zinc-800" />
+            <img
+              src={enlargedReceipt}
+              alt="Receipt full size"
+              className="w-full h-auto rounded-2xl shadow-2xl border border-zinc-800"
+            />
           </div>
         </div>
       )}
 
       {/* Bazaar Detail Popup */}
       {selectedDate && (
-        <div className="fixed inset-0 bg-[#0a0a0a]/80 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setSelectedDate(null)}>
-          <div 
+        <div
+          className="fixed inset-0 bg-[#0a0a0a]/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedDate(null)}
+        >
+          <div
             className="bg-[#111111] border border-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center px-6 py-4 border-b border-zinc-800">
               <div>
                 <h3 className="font-display font-bold text-lg text-zinc-100">
-                  {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                  {new Date(selectedDate).toLocaleDateString(undefined, {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </h3>
-                <p className="text-xs text-zinc-500">Bazaar & Purchase Details</p>
+                <p className="text-xs text-zinc-500">
+                  Bazaar & Purchase Details
+                </p>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedDate(null)}
                 className="p-1.5 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors cursor-pointer"
               >
@@ -336,13 +333,18 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
             <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
               {(() => {
                 const info = getDayInfo(selectedDate);
-                const hasActivity = info.assignments.length > 0 || info.expenses.length > 0 || info.menus.length > 0;
-                
+                const hasActivity =
+                  info.assignments.length > 0 ||
+                  info.expenses.length > 0 ||
+                  info.menus.length > 0;
+
                 if (!hasActivity) {
                   return (
                     <div className="text-center py-8">
                       <CalendarDays className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                      <p className="text-zinc-400 font-medium">No activity on this date</p>
+                      <p className="text-zinc-400 font-medium">
+                        No activity on this date
+                      </p>
                     </div>
                   );
                 }
@@ -350,41 +352,66 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
                 return (
                   <>
                     {/* Meal Booking Counts */}
-                    {info.mealCounts && (info.mealCounts.lunch > 0 || info.mealCounts.dinner > 0) && (
-                      <div className="p-4 bg-gradient-to-r from-purple-600/10 to-indigo-600/5 border border-purple-500/20 rounded-xl mb-4">
-                        <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2 mb-3">
-                          <Utensils className="w-4 h-4" /> Meal Bookings
-                        </h4>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-800 text-center">
-                            <Sun className="w-5 h-5 text-amber-400 mx-auto mb-1" />
-                            <p className="text-lg font-black text-zinc-100">{info.mealCounts.lunch}</p>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Lunch</p>
-                          </div>
-                          <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-800 text-center">
-                            <Moon className="w-5 h-5 text-blue-400 mx-auto mb-1" />
-                            <p className="text-lg font-black text-zinc-100">{info.mealCounts.dinner}</p>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Dinner</p>
+                    {info.mealCounts &&
+                      (info.mealCounts.lunch > 0 ||
+                        info.mealCounts.dinner > 0) && (
+                        <div className="p-4 bg-gradient-to-r from-purple-600/10 to-indigo-600/5 border border-purple-500/20 rounded-xl mb-4">
+                          <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+                            <Utensils className="w-4 h-4" /> Meal Bookings
+                          </h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-800 text-center">
+                              <Sun className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+                              <p className="text-lg font-black text-zinc-100">
+                                {info.mealCounts.lunch}
+                              </p>
+                              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">
+                                Lunch
+                              </p>
+                            </div>
+                            <div className="p-3 bg-zinc-900/50 rounded-xl border border-zinc-800 text-center">
+                              <Moon className="w-5 h-5 text-blue-400 mx-auto mb-1" />
+                              <p className="text-lg font-black text-zinc-100">
+                                {info.mealCounts.dinner}
+                              </p>
+                              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">
+                                Dinner
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Today's Menus */}
                     {info.menus.length > 0 && (
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
-                          <Utensils className="w-4 h-4" /> Daily Menus — Lunch & Dinner
+                          <Utensils className="w-4 h-4" /> Daily Menus — Lunch &
+                          Dinner
                         </h4>
                         {info.menus.map((menu) => (
-                          <div key={menu.id} className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                          <div
+                            key={menu.id}
+                            className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800"
+                          >
                             <div className="flex items-center justify-between mb-2">
-                              <span className={`capitalize text-[10px] font-bold px-2 py-0.5 rounded ${menu.mealType === 'lunch' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-teal-500/20 text-teal-400'}`}>{menu.mealType}</span>
-                              <span className="text-xs font-semibold text-emerald-400">Est: {menu.estimatedCost}৳</span>
+                              <span
+                                className={`capitalize text-[10px] font-bold px-2 py-0.5 rounded ${menu.mealType === "lunch" ? "bg-emerald-500/20 text-emerald-400" : "bg-teal-500/20 text-teal-400"}`}
+                              >
+                                {menu.mealType}
+                              </span>
+                              <span className="text-xs font-semibold text-emerald-400">
+                                Est: {menu.estimatedCost}৳
+                              </span>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
                               {menu.items.map((item, i) => (
-                                <span key={i} className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded-lg">{item}</span>
+                                <span
+                                  key={i}
+                                  className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded-lg"
+                                >
+                                  {item}
+                                </span>
                               ))}
                             </div>
                           </div>
@@ -396,26 +423,46 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
                     {info.assignments.length > 0 && (
                       <div className="space-y-3 mt-4">
                         <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                          <ShoppingCart className="w-4 h-4" /> Bazaar Assignments
+                          <ShoppingCart className="w-4 h-4" /> Bazaar
+                          Assignments
                         </h4>
                         {info.assignments.map((assignment) => (
-                          <div key={assignment.id} className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                          <div
+                            key={assignment.id}
+                            className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800"
+                          >
                             <div className="flex items-center justify-between mb-2">
-                              <h5 className="font-bold text-zinc-200 text-sm">Assigned to: {assignment.userName || 'Member'}</h5>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                assignment.status === 'verified' ? 'bg-emerald-500/15 text-emerald-400' :
-                                assignment.status === 'submitted' ? 'bg-amber-500/15 text-amber-400' : 'bg-zinc-800 text-zinc-400'
-                              }`}>{assignment.status}</span>
+                              <h5 className="font-bold text-zinc-200 text-sm">
+                                Assigned to: {assignment.userName || "Member"}
+                              </h5>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  assignment.status === "verified"
+                                    ? "bg-emerald-500/15 text-emerald-400"
+                                    : assignment.status === "submitted"
+                                      ? "bg-amber-500/15 text-amber-400"
+                                      : "bg-zinc-800 text-zinc-400"
+                                }`}
+                              >
+                                {assignment.status}
+                              </span>
                             </div>
                             {assignment.shoppingList.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-2">
                                 {assignment.shoppingList.map((item, i) => (
-                                  <span key={i} className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded-lg">{item}</span>
+                                  <span
+                                    key={i}
+                                    className="text-[11px] bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-0.5 rounded-lg"
+                                  >
+                                    {item}
+                                  </span>
                                 ))}
                               </div>
                             )}
                             {assignment.delegatedFrom && (
-                              <p className="text-[10px] text-amber-400 mt-2">🔄 Delegated from original assignee</p>
+                              <p className="text-[10px] text-amber-400 mt-2">
+                                🔄 Delegated from original assignee
+                              </p>
                             )}
                           </div>
                         ))}
@@ -426,34 +473,57 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
                     {info.expenses.length > 0 && (
                       <div className="space-y-3 mt-4">
                         <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-                          <Receipt className="w-4 h-4" /> Expenses ({info.totalSpent}৳ total)
+                          <Receipt className="w-4 h-4" /> Expenses (
+                          {info.totalSpent}৳ total)
                         </h4>
                         {info.expenses.map((expense) => (
-                          <div key={expense.id} className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                          <div
+                            key={expense.id}
+                            className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800"
+                          >
                             <div className="flex items-center justify-between mb-3">
-                              <h5 className="font-bold text-zinc-200 text-sm">Purchases by: {expense.userName || 'Member'}</h5>
+                              <h5 className="font-bold text-zinc-200 text-sm">
+                                Purchases by: {expense.userName || "Member"}
+                              </h5>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-black text-emerald-400">{expense.totalCost}৳</span>
+                                <span className="text-xs font-black text-emerald-400">
+                                  {expense.totalCost}৳
+                                </span>
                                 {expense.receiptImage && (
-                                  <span className="text-[10px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 border border-blue-500/20" title="Receipt uploaded">
+                                  <span
+                                    className="text-[10px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 border border-blue-500/20"
+                                    title="Receipt uploaded"
+                                  >
                                     <ImageIcon className="w-3 h-3" /> Receipt
                                   </span>
                                 )}
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  expense.status === 'approved' ? 'bg-emerald-500/15 text-emerald-400' :
-                                  expense.status === 'rejected' ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
-                                }`}>{expense.status}</span>
+                                <span
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    expense.status === "approved"
+                                      ? "bg-emerald-500/15 text-emerald-400"
+                                      : expense.status === "rejected"
+                                        ? "bg-red-500/15 text-red-400"
+                                        : "bg-amber-500/15 text-amber-400"
+                                  }`}
+                                >
+                                  {expense.status}
+                                </span>
                               </div>
                             </div>
                             {/* Itemized expense breakdown */}
                             <div className="space-y-1.5 mb-3">
                               {expense.items.map((item, i) => (
-                                <div key={i} className="flex justify-between items-center py-1.5 px-3 bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+                                <div
+                                  key={i}
+                                  className="flex justify-between items-center py-1.5 px-3 bg-zinc-900/50 rounded-lg border border-zinc-800/50"
+                                >
                                   <span className="text-xs text-zinc-300 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                     {item.name}
                                   </span>
-                                  <span className="text-xs font-mono font-bold text-zinc-200">{item.cost}৳</span>
+                                  <span className="text-xs font-mono font-bold text-zinc-200">
+                                    {item.cost}৳
+                                  </span>
                                 </div>
                               ))}
                             </div>
@@ -462,10 +532,13 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
                               <div className="mt-2 pt-3 border-t border-zinc-800">
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                                    <ImageIcon className="w-3.5 h-3.5" /> Receipt
+                                    <ImageIcon className="w-3.5 h-3.5" />{" "}
+                                    Receipt
                                   </span>
                                   <button
-                                    onClick={() => setEnlargedReceipt(expense.receiptImage!)}
+                                    onClick={() =>
+                                      setEnlargedReceipt(expense.receiptImage!)
+                                    }
                                     className="text-[10px] text-blue-400 hover:text-blue-300 font-bold cursor-pointer"
                                   >
                                     View Full Size
@@ -476,7 +549,9 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
                                     src={expense.receiptImage}
                                     alt="Purchase receipt"
                                     className="w-full max-h-32 object-contain rounded-lg bg-zinc-900/70 border border-zinc-800 cursor-pointer"
-                                    onClick={() => setEnlargedReceipt(expense.receiptImage!)}
+                                    onClick={() =>
+                                      setEnlargedReceipt(expense.receiptImage!)
+                                    }
                                   />
                                 </div>
                               </div>
@@ -494,72 +569,7 @@ export default function Hero({ onLoginClick, onRegisterClick, onDemoLogin, menus
       )}
 
       {/* Feature Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-28">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl font-extrabold text-zinc-100 tracking-tight sm:text-4xl">
-            Designed for transparent dining management
-          </h2>
-          <p className="mt-4 text-lg text-zinc-400">
-            Power Point Familia implements explicit data separation and actions for each administrative tier.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
-          <div className="bg-[#111111] p-6 rounded-2xl border border-zinc-800/80 hover:border-emerald-500/30 transition-all">
-            <div className="w-12 h-12 bg-zinc-900 text-zinc-100 border border-zinc-800 rounded-xl flex items-center justify-center font-bold text-lg mb-5">
-              1
-            </div>
-            <h3 className="font-bold text-lg text-zinc-200 mb-2 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-rose-500" />
-              Role-Based Isolations
-            </h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Strict RBAC enforcement prevents access crossover. Guests, members, managers, and developer admins work in custom dashboards.
-            </p>
-          </div>
-
-          <div className="bg-[#111111] p-6 rounded-2xl border border-zinc-800/80 hover:border-emerald-500/30 transition-all">
-            <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 border border-emerald-500/10 rounded-xl flex items-center justify-center font-bold text-lg mb-5">
-              2
-            </div>
-            <h3 className="font-bold text-lg text-zinc-200 mb-2 flex items-center gap-2">
-              <Utensils className="w-4 h-4 text-emerald-500" />
-              Flexible Bookings
-            </h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Members book exact meal counts for lunch or dinner. Meal schedules can be customized up to several days in advance.
-            </p>
-          </div>
-
-          <div className="bg-[#111111] p-6 rounded-2xl border border-zinc-800/80 hover:border-emerald-500/30 transition-all">
-            <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 border border-emerald-500/10 rounded-xl flex items-center justify-center font-bold text-lg mb-5">
-              3
-            </div>
-            <h3 className="font-bold text-lg text-zinc-200 mb-2 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-              Live Rate Engine
-            </h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Dynamic financial balances. Every consumed meal is factored into a member's ledger instantly against their approved deposits.
-            </p>
-          </div>
-
-          <div className="bg-[#111111] p-6 rounded-2xl border border-zinc-800/80 hover:border-emerald-500/30 transition-all">
-            <div className="w-12 h-12 bg-blue-500/10 text-blue-400 border border-blue-500/10 rounded-xl flex items-center justify-center font-bold text-lg mb-5">
-              4
-            </div>
-            <h3 className="font-bold text-lg text-zinc-200 mb-2 flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-400" />
-              Family Centered
-            </h3>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Designed for transparency. No hidden charges, fully real-time ledgers, and profile editing to keep phone and contact info fresh.
-            </p>
-          </div>
-
-        </div>
-      </div>
+      <HeroFeaturesGrid />
     </div>
   );
 }
