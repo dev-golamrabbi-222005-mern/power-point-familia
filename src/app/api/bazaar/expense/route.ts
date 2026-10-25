@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const { error, user } = authenticate(req, ['member', 'manager', 'admin']);
     if (error) return error;
 
-    const { assignmentId, date, items, totalCost, remarks, receiptImage } = await req.json();
+    const { assignmentId, date, items, totalCost, allocatedCash, returnedCash, remarks, receiptImage } = await req.json();
 
     if (!assignmentId || !date || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -58,8 +58,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'This is not your assigned bazaar.' }, { status: 403 });
     }
 
+    const calculatedTotal = items.reduce((sum: number, item: any) => sum + Number(item.cost || 0), 0);
+    const finalTotal = totalCost !== undefined ? Number(totalCost) : calculatedTotal;
+    const finalAllocated = Number(allocatedCash ?? assignment.allocatedCash ?? assignment.budget ?? 0);
+    const finalReturned = returnedCash !== undefined ? Number(returnedCash) : Math.max(0, finalAllocated - finalTotal);
+
     // Update assignment status for BOTH assigned members automatically
     assignment.status = 'submitted';
+    assignment.allocatedCash = finalAllocated;
+    assignment.returnedCash = finalReturned;
+    assignment.items = items;
     assignment.submittedAt = new Date().toISOString();
     assignment.submittedBy = user!.id;
 
@@ -68,8 +76,10 @@ export async function POST(req: NextRequest) {
       assignmentId,
       userId: assignment.userId,
       date,
+      allocatedCash: finalAllocated,
+      returnedCash: finalReturned,
       items,
-      totalCost: totalCost || items.reduce((sum: number, item: any) => sum + Number(item.cost || 0), 0),
+      totalCost: finalTotal,
       status: 'pending',
       remarks,
       receiptImage,
@@ -81,7 +91,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       expense: newExpense,
-      message: 'Bazaar expense submitted! Awaiting manager verification.'
+      reconciliation: {
+        allocatedCash: finalAllocated,
+        actualSpend: finalTotal,
+        returnedCash: finalReturned,
+      },
+      message: 'Bazaar bill submitted successfully! Awaiting manager reconciliation & approval.'
     }, { status: 201 });
   } catch (error) {
     console.error('Submit bazaar expense error', error);

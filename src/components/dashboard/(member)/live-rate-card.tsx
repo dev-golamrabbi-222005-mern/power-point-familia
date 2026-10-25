@@ -8,8 +8,10 @@ interface LiveRateCardProps {
 
 export const LiveRateCard: React.FC<LiveRateCardProps> = ({
   rate,
-  equationText = 'Mess Total Verified Meal Cost / Mess Total Meals',
+  equationText = 'Approved Bazaar Expenses / Total Active Meals',
 }) => {
+  const hasRate = rate > 0;
+
   return (
     <div className="bg-gradient-to-r from-emerald-600/10 to-teal-600/5 border border-emerald-500/20 rounded-2xl p-5 shadow-xs">
       <div className="flex items-center justify-between">
@@ -18,8 +20,17 @@ export const LiveRateCard: React.FC<LiveRateCardProps> = ({
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Live Calculated Rate</span>
-            <h3 className="text-3xl font-black text-zinc-100">{rate}৳</h3>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+              {hasRate ? 'Live Calculated Rate' : 'Live Calculated Rate'}
+            </span>
+            <h3 className="text-3xl font-black text-zinc-100">
+              {hasRate ? `৳${rate}` : '৳০.০০'}
+            </h3>
+            {!hasRate && (
+              <p className="text-[10px] text-zinc-400 mt-0.5">
+                No approved bazaar expenses yet • Base: ৳45
+              </p>
+            )}
           </div>
         </div>
         <div className="text-right hidden sm:block">
@@ -32,3 +43,5 @@ export const LiveRateCard: React.FC<LiveRateCardProps> = ({
     </div>
   );
 };
+
+export default LiveRateCard;

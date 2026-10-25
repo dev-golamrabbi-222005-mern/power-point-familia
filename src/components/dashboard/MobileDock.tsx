@@ -30,6 +30,8 @@ export default function MobileDock() {
     toggleRoleView,
     pendingDepositsCount,
     pendingUsersCount,
+    todayBazaarAssignment,
+    setIsLiveBazaarOpen,
     setIsQuickMealOpen,
     setIsQuickExpenseOpen,
     setIsQuickApproveOpen,
@@ -51,6 +53,27 @@ export default function MobileDock() {
 
     return (
       <div className="md:hidden fixed bottom-3 left-3 right-3 z-50 max-w-md mx-auto pointer-events-auto">
+        {/* Unlocked Live Bazaar Button on Market Day */}
+        {todayBazaarAssignment && (
+          <button
+            onClick={() => setIsLiveBazaarOpen(true)}
+            className="w-full mb-2 py-2 px-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-500 hover:from-amber-600 hover:to-emerald-600 text-white font-extrabold text-xs rounded-2xl shadow-xl flex items-center justify-between animate-pulse cursor-pointer border border-white/20 active:scale-98 transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <div className="p-1 bg-black/20 rounded-md">
+                <ShoppingBag className="w-4 h-4 text-white" />
+              </div>
+              <span>Live Bazaar Mode Unlocked!</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded-full font-mono font-bold text-amber-200">
+                ৳{todayBazaarAssignment.allocatedCash ?? todayBazaarAssignment.budget ?? 0}
+              </span>
+              <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-md font-semibold">Open</span>
+            </div>
+          </button>
+        )}
+
         <nav className="backdrop-blur-xl bg-zinc-950/90 border border-zinc-800/85 rounded-3xl px-2 py-2 shadow-2xl shadow-black/80 flex items-center justify-around relative">
           {/* Left items */}
           {leftItems.map(item => {

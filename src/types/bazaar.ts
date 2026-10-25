@@ -8,6 +8,14 @@ export interface BazaarPair {
   member2Name?: string; // Hydrated
 }
 
+export interface BazaarItem {
+  name: string;
+  qty?: string;
+  cost: number;
+  isExtra?: boolean;
+  checked?: boolean;
+}
+
 export interface BazaarAssignment {
   id: string;
   userId: string;
@@ -15,11 +23,16 @@ export interface BazaarAssignment {
   date: string; // YYYY-MM-DD
   shoppingList: string[]; // Items the manager requests
   budget?: number; // Manager assigned budget for the bajar
+  allocatedCash?: number; // Cash handed over by manager
+  returnedCash?: number; // Cash returned to mess
+  items?: BazaarItem[]; // Itemized checklist
   status: 'pending' | 'submitted' | 'verified' | 'skipped';
   submittedAt?: string;
   submittedBy?: string; // userId of member who submitted the actual cost
   delegatedFrom?: string; // userId of the person who delegated this to someone else
   bazaarPairId?: string; // Links to a BazaarPair
+  verifiedAt?: string;
+  verifiedBy?: string;
   userName?: string; // Hydrated Member 1
   member2Name?: string; // Hydrated Member 2
 }
@@ -29,12 +42,16 @@ export interface BazaarExpense {
   assignmentId: string;
   userId: string;
   date: string; // YYYY-MM-DD
-  items: { name: string; cost: number }[];
+  allocatedCash?: number;
+  returnedCash?: number;
+  items: BazaarItem[];
   totalCost: number;
   receiptImage?: string; // Optional base64 or URL
   status: 'pending' | 'approved' | 'rejected';
   remarks?: string;
   submittedAt: string;
+  verifiedAt?: string;
+  verifiedBy?: string;
   userName?: string; // Hydrated
 }
 

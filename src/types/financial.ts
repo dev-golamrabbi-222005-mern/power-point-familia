@@ -165,6 +165,8 @@ export interface MemberOverviewData {
   todayMessLunch: number;
   todayMessDinner: number;
   liveMealRate: number;
+  baseRate?: number;
+  hasActiveCalculation?: boolean;
   today: string;
 }
 
@@ -244,6 +246,8 @@ export interface ManagerOverviewData {
   mealCostThisWeek: number;
   mealCostThisMonth: number;
   liveMealRate: number;
+  baseRate?: number;
+  hasActiveCalculation?: boolean;
   today: string;
   fixedBills: FixedBillItem[];
   pastMonthComparison: PastMonthComparisonData[];

@@ -28,8 +28,11 @@ export default function DashboardTopBar() {
     activeRoleView,
     toggleRoleView,
     mealRate,
+    baseRate,
+    liveMealRate,
     pendingDepositsCount,
     pendingUsersCount,
+    pendingMealRequestsCount,
     setIsProfileOpen,
     setIsQuickApproveOpen,
   } = useDashboard();
@@ -63,7 +66,8 @@ export default function DashboardTopBar() {
 
   const totalNotifCount =
     (user.role === 'admin' ? pendingUsersCount : 0) +
-    (user.role === 'manager' || user.role === 'admin' ? pendingDepositsCount : 0);
+    (user.role === 'manager' || user.role === 'admin' ? pendingDepositsCount : 0) +
+    (user.role === 'manager' || user.role === 'admin' ? pendingMealRequestsCount : 0);
 
   const handleLogout = () => {
     logout();
@@ -138,8 +142,17 @@ export default function DashboardTopBar() {
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-900/90 border border-zinc-800 rounded-xl text-xs font-bold shadow-xs">
             <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
             <span className="text-zinc-200">
-              ৳{mealRate}
-              <span className="text-[10px] text-zinc-400 font-normal">/মিল</span>
+              {liveMealRate > 0 ? (
+                <>
+                  ৳{liveMealRate.toFixed(1)}
+                  <span className="text-[10px] text-zinc-400 font-normal">/মিল</span>
+                </>
+              ) : (
+                <>
+                  ৳0.00
+                  <span className="text-[10px] text-zinc-400 font-normal"> (Est: ৳{baseRate})</span>
+                </>
+              )}
             </span>
           </div>
 
@@ -207,10 +220,29 @@ export default function DashboardTopBar() {
                     </Link>
                   )}
 
+                  {(user.role === 'manager' || user.role === 'admin') && pendingMealRequestsCount > 0 && (
+                    <Link
+                      href="/dashboard/meals"
+                      onClick={() => setNotifDropdownOpen(false)}
+                      className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between cursor-pointer hover:bg-amber-500/20 transition-colors block"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-amber-400 animate-pulse" />
+                        <div>
+                          <p className="text-xs font-bold text-amber-300">
+                            {pendingMealRequestsCount} Late Meal-Off Requests
+                          </p>
+                          <p className="text-[10px] text-zinc-400">Urgent manager review required</p>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
+                    </Link>
+                  )}
+
                   <div className="p-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl flex items-center gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <div className="text-[11px] text-zinc-300">
-                      Auto-booking is active. Daily cutoff is 9 AM for Lunch & 5 PM for Dinner.
+                      Auto-booking is active. Daily cutoff is 9:00 AM for Lunch & 3:00 PM for Dinner.
                     </div>
                   </div>
                 </div>

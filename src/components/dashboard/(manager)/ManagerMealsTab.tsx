@@ -16,7 +16,13 @@ import {
   TrendingUp, 
   Users, 
   DollarSign,
-  CheckCircle2
+  CheckCircle2,
+  Receipt,
+  ShieldAlert,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  FileText
 } from 'lucide-react';
 import { BazaarAssignment, BazaarExpense, MealMenu, User, BazaarPair } from '@/src/types';
 
@@ -39,8 +45,12 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
     monthTotal: 0,
     totalMealCashCollected: 0,
     totalBazaarSpent: 0,
-    liveMealRate: 45,
+    liveMealRate: 0,
   });
+
+  // Late meal off requests
+  const [mealRequests, setMealRequests] = useState<any[]>([]);
+  const [requestActionLoading, setRequestActionLoading] = useState<string | null>(null);
 
   // Bazaar state
   const [assignments, setAssignments] = useState<(BazaarAssignment & { userName?: string })[]>([]);
@@ -48,6 +58,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
   const [members, setMembers] = useState<User[]>([]);
   const [pairs, setPairs] = useState<BazaarPair[]>([]);
   const [currentPairIndex, setCurrentPairIndex] = useState(0);
+  const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
 
   // Force cancel modal
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -70,18 +81,20 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
   const fetchMealsData = async () => {
     try {
       setLoading(true);
-      const [membersRes, assignRes, expRes, pairsRes, statsRes, recordsRes] = await Promise.all([
+      const [membersRes, assignRes, expRes, pairsRes, statsRes, recordsRes, reqRes] = await Promise.all([
         fetch('/api/members', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/bazaar/assign', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/bazaar/expense', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/bazaar/pairs', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/records', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/records/request-meal-off', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       if (membersRes.ok) setMembers(await membersRes.json());
       if (assignRes.ok) setAssignments(await assignRes.json());
       if (expRes.ok) setExpenses(await expRes.json());
+      if (reqRes.ok) setMealRequests(await reqRes.json());
       
       if (pairsRes.ok) {
         const pairData = await pairsRes.json();
@@ -112,7 +125,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
           monthTotal,
           totalMealCashCollected: mStats?.totalSystemDeposits || 0,
           totalBazaarSpent: mStats?.totalBazaarExpenses || 0,
-          liveMealRate: mStats?.liveMealRate || 45,
+          liveMealRate: mStats?.liveMealRate || 0,
         });
       }
     } catch (err) {
@@ -126,6 +139,32 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
   useEffect(() => {
     fetchMealsData();
   }, [token]);
+
+  const handleMealRequestAction = async (recordId: string, action: 'accept' | 'reject') => {
+    try {
+      setRequestActionLoading(recordId);
+      const res = await fetch('/api/records/request-meal-off', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ recordId, action }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Action failed');
+      }
+
+      await fetchMealsData();
+      onRefreshMenus();
+    } catch (err: any) {
+      alert(err.message || 'Action failed');
+    } finally {
+      setRequestActionLoading(null);
+    }
+  };
 
   const handleForceCancelToday = async () => {
     try {
@@ -163,6 +202,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
 
     try {
       setAssigning(true);
+      const cash = Number(assignBudget || 0);
       const res = await fetch('/api/bazaar/assign', {
         method: 'POST',
         headers: {
@@ -172,7 +212,8 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
         body: JSON.stringify({
           userId: assignUserId,
           member2Id: assignMember2Id || undefined,
-          budget: Number(assignBudget || 0),
+          budget: cash,
+          allocatedCash: cash,
           date: assignDate,
           shoppingList: assignShoppingList.split(',').map(i => i.trim()).filter(i => i),
         }),
@@ -203,10 +244,13 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
       });
       if (!res.ok) throw new Error('Status update failed');
       fetchMealsData();
+      onRefreshMenus();
     } catch (err: any) {
       alert(err.message || 'Action failed');
     }
   };
+
+  const pendingRequests = mealRequests.filter(r => r.requestStatus === 'pending');
 
   if (loading) {
     return (
@@ -249,23 +293,23 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
             <Utensils className="w-5 h-5 text-blue-500" />
           </div>
           <p className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white">
-            {mealKpis.monthTotal} <span className="text-xs font-normal text-zinc-400">this month</span>
+            {mealKpis.monthTotal} <span className="text-xs font-normal text-zinc-400">month total</span>
           </p>
-          <p className="text-xs text-blue-600 dark:text-blue-300 font-semibold mt-1">
-            ~{mealKpis.weekTotal} meals / week
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 pt-2 border-t border-blue-200/50 dark:border-blue-800/40 font-semibold">
+            Avg ~{mealKpis.weekTotal} meals / week
           </p>
         </div>
 
-        {/* KPI 3: Total Meal Cash Metrics */}
+        {/* KPI 3: Live Meal Rate & Bazaar Cost */}
         <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent dark:from-amber-950/30 dark:to-zinc-900 p-4 rounded-xl border border-amber-200 dark:border-amber-800/60 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-              Live Meal Rate & Spent
+              Live Meal Rate
             </p>
             <TrendingUp className="w-5 h-5 text-amber-500" />
           </div>
-          <p className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white">
-            ৳{mealKpis.liveMealRate} <span className="text-xs font-normal text-zinc-400">/ meal</span>
+          <p className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white font-mono">
+            ৳{mealKpis.liveMealRate.toFixed(2)}
           </p>
           <p className="text-xs text-amber-700 dark:text-amber-300 font-semibold mt-1">
             Bazaar Spent: ৳{mealKpis.totalBazaarSpent}
@@ -292,16 +336,101 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
         </div>
       </div>
 
+      {/* === LATE MEAL-OFF REQUESTS (EMERGENCY ALERTS FOR MANAGER) === */}
+      <div className={`rounded-xl border p-4 md:p-6 shadow-sm transition-all ${
+        pendingRequests.length > 0 
+          ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800' 
+          : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
+      }`}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div>
+            <h3 className="text-base md:text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <ShieldAlert className={`w-5 h-5 ${pendingRequests.length > 0 ? 'text-amber-500 animate-bounce' : 'text-zinc-400'}`} />
+              Late Meal-Off Requests (কাট-অফ পরবর্তী মিল অফ রিকোয়েস্ট)
+              {pendingRequests.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-xs font-extrabold bg-amber-500 text-white animate-pulse">
+                  {pendingRequests.length} Pending Review
+                </span>
+              )}
+            </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Members requesting meal cancellation after 9:00 AM (lunch) or 3:00 PM (dinner). Accept to set count to 0 (no charge) or Reject to keep meal ON.
+            </p>
+          </div>
+        </div>
+
+        {pendingRequests.length === 0 ? (
+          <div className="py-6 text-center text-xs text-zinc-400 flex flex-col items-center justify-center gap-1">
+            <CheckCircle2 className="w-6 h-6 text-emerald-500/60" />
+            <span>No pending late meal-off requests right now. All schedules are locked or normal.</span>
+          </div>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {pendingRequests.map((req) => (
+              <div
+                key={req.id}
+                className="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-amber-200 dark:border-amber-800/80 shadow-xs space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-extrabold text-zinc-900 dark:text-white">
+                      {req.userName}
+                    </p>
+                    <p className="text-xs text-zinc-400 font-mono">{req.userEmail}</p>
+                  </div>
+                  <span className="px-2 py-1 rounded-md text-[11px] font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    {req.mealType} • {req.date}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-zinc-50 dark:bg-zinc-800/60 rounded-lg border border-zinc-200/60 dark:border-zinc-700/60">
+                  <p className="text-[11px] text-zinc-400 font-bold uppercase mb-0.5">Member's Reason:</p>
+                  <p className="text-xs text-zinc-800 dark:text-zinc-200 italic">
+                    "{req.requestReason || 'No reason provided'}"
+                  </p>
+                  {req.requestedAt && (
+                    <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Requested: {new Date(req.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+
+                {/* Manager Decision Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <button
+                    onClick={() => handleMealRequestAction(req.id, 'reject')}
+                    disabled={requestActionLoading === req.id}
+                    className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold text-xs rounded-lg transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Reject (Keep ON)</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleMealRequestAction(req.id, 'accept')}
+                    disabled={requestActionLoading === req.id}
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Accept (Turn OFF)</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* === BAZAAR ASSIGNMENT & PAIRING SECTION === */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 md:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
           <div>
             <h3 className="text-base md:text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-orange-500" />
-              Bazaar Assignment & Rotation Pairing
+              Bazaar Assignment & Handover Cash (ফর্দ ও ক্যাশ হস্তান্তর)
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Assign bazaar duty to members with requested shopping list and budget
+              Assign pairs of members with grocery checklist and handed over cash for live market mode
             </p>
           </div>
           <button
@@ -319,12 +448,13 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Member 1 (Primary)
+                  Member 1 (Primary Duty Member)
                 </label>
                 <select
                   value={assignUserId}
                   onChange={(e) => setAssignUserId(e.target.value)}
                   className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                  required
                 >
                   <option value="">-- Choose Member 1 --</option>
                   {members.map(m => (
@@ -335,15 +465,15 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
 
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Member 2 (Partner - Optional)
+                  Member 2 (Assigned Partner)
                 </label>
                 <select
                   value={assignMember2Id}
                   onChange={(e) => setAssignMember2Id(e.target.value)}
                   className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
                 >
-                  <option value="">-- Choose Member 2 --</option>
-                  {members.filter(m => m.id !== assignUserId).map(m => (
+                  <option value="">-- Optional Partner --</option>
+                  {members.map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
                 </select>
@@ -353,7 +483,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Date of Bazaar
+                  Date of Bazaar (বাজারের তারিখ)
                 </label>
                 <input
                   type="date"
@@ -365,27 +495,28 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
 
               <div>
                 <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Assigned Budget (৳)
+                  Handover Cash / Allocated Budget (ক্যাশ টাকা হস্তান্তর ৳)
                 </label>
                 <input
                   type="number"
                   value={assignBudget}
                   onChange={(e) => setAssignBudget(e.target.value)}
-                  placeholder="e.g. 2000"
-                  className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white"
+                  placeholder="e.g. 1500"
+                  className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-white font-mono"
+                  required
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                Requested Shopping List (Comma separated)
+                Draft Shopping Checklist (ফর্দ - কমা দিয়ে আলাদা করুন)
               </label>
               <input
                 type="text"
                 value={assignShoppingList}
                 onChange={(e) => setAssignShoppingList(e.target.value)}
-                placeholder="e.g. Chicken 2kg, Rice 5kg, Oil 1L, Vegetables"
+                placeholder="e.g. মুরগি ২ কেজি, চাল ৫ কেজি, সয়াবিন তেল ১ লিটার, আলু"
                 className="w-full px-3 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs text-zinc-900 dark:text-white"
               />
             </div>
@@ -407,8 +538,8 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
               <tr className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 font-bold">
                 <th className="p-3">Assigned Members</th>
                 <th className="p-3">Date</th>
-                <th className="p-3">Budget</th>
-                <th className="p-3">Shopping List</th>
+                <th className="p-3">Handover Cash</th>
+                <th className="p-3">Checklist</th>
                 <th className="p-3 text-right">Status</th>
               </tr>
             </thead>
@@ -427,13 +558,13 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
                       {a.member2Name && <span className="text-orange-500 font-bold"> & {a.member2Name}</span>}
                     </td>
                     <td className="p-3 font-medium text-zinc-600 dark:text-zinc-400">{a.date}</td>
-                    <td className="p-3 font-extrabold text-amber-500">৳{a.budget || 0}</td>
-                    <td className="p-3 text-xs text-zinc-500 max-w-[200px] truncate">
+                    <td className="p-3 font-extrabold text-amber-500 font-mono">৳{a.allocatedCash ?? a.budget ?? 0}</td>
+                    <td className="p-3 text-xs text-zinc-500 max-w-[220px] truncate">
                       {a.shoppingList?.join(', ') || '--'}
                     </td>
                     <td className="p-3 text-right">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        a.status === 'verified' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+                        a.status === 'verified' ? 'bg-emerald-500/10 text-emerald-500' : a.status === 'submitted' ? 'bg-blue-500/10 text-blue-500' : 'bg-amber-500/10 text-amber-500'
                       }`}>
                         {a.status}
                       </span>
@@ -446,96 +577,166 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
         </div>
       </div>
 
-      {/* === BAZAAR EXPENSE VERIFICATION SECTION === */}
+      {/* === BAZAAR PURCHASE RECONCILIATION & VERIFICATION SECTION === */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 md:p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-100 dark:border-zinc-800">
           <div>
             <h3 className="text-base md:text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-emerald-500" />
-              Bazaar Purchase Expense Validation
+              <Receipt className="w-5 h-5 text-emerald-500" />
+              Live Bazaar Reconciliation & Verification (হিসাব মেলানো)
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Verify submitted purchase expenses and receipts (Approving deducts from Mess Cash in hand)
+              Reconcile cash out vs actual spend vs returned cash, review itemized grocery lists, and approve to recalculate live meal rate
             </p>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs md:text-sm border-collapse">
-            <thead>
-              <tr className="bg-zinc-50 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 font-bold">
-                <th className="p-3">Member</th>
-                <th className="p-3">Date</th>
-                <th className="p-3">Items Purchased</th>
-                <th className="p-3">Total Cost</th>
-                <th className="p-3">Receipt</th>
-                <th className="p-3 text-center">Status</th>
-                <th className="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {expenses.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-4 text-center text-zinc-400 text-xs">
-                    No bazaar purchase expenses submitted yet.
-                  </td>
-                </tr>
-              ) : (
-                expenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30">
-                    <td className="p-3 font-bold text-zinc-900 dark:text-white">{exp.userName || 'Member'}</td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">{exp.date}</td>
-                    <td className="p-3 text-xs text-zinc-500 max-w-[200px] truncate">
-                      {exp.items?.map(i => `${i.name} (৳${i.cost})`).join(', ') || '--'}
-                    </td>
-                    <td className="p-3 font-extrabold text-zinc-900 dark:text-white">৳{exp.totalCost}</td>
-                    <td className="p-3">
-                      {exp.receiptImage ? (
+        <div className="space-y-3">
+          {expenses.length === 0 ? (
+            <div className="py-8 text-center text-zinc-400 text-xs border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
+              No bazaar expenses submitted for reconciliation yet.
+            </div>
+          ) : (
+            expenses.map((exp) => {
+              const matchingAssign = assignments.find(a => a.id === exp.assignmentId);
+              const cashOut = exp.allocatedCash ?? matchingAssign?.allocatedCash ?? matchingAssign?.budget ?? exp.totalCost;
+              const actualSpend = exp.totalCost;
+              const cashReturn = exp.returnedCash !== undefined ? exp.returnedCash : Math.max(0, cashOut - actualSpend);
+              const isExpanded = expandedExpenseId === exp.id;
+
+              return (
+                <div
+                  key={exp.id}
+                  className={`rounded-xl border transition-all overflow-hidden ${
+                    exp.status === 'pending'
+                      ? 'bg-amber-50/20 dark:bg-amber-950/10 border-amber-300 dark:border-amber-800/80 shadow-xs'
+                      : 'bg-zinc-50/50 dark:bg-zinc-850 border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  {/* Summary Bar */}
+                  <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* Left: Member & Date */}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-sm text-zinc-900 dark:text-white">
+                          {exp.userName || 'Member'}
+                        </span>
+                        <span className="text-xs text-zinc-400 font-mono">({exp.date})</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          exp.status === 'approved' 
+                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                            : exp.status === 'rejected' 
+                            ? 'bg-red-500/10 text-red-500' 
+                            : 'bg-amber-500/10 text-amber-500 border border-amber-500/30 animate-pulse'
+                        }`}>
+                          {exp.status === 'approved' ? '✓ Verified' : exp.status === 'pending' ? '⏳ Awaiting Verification' : 'Rejected'}
+                        </span>
+                      </div>
+                      {exp.remarks && (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 italic mt-1">
+                          "{exp.remarks}"
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Middle: 3-Point Reconciliation Metrics */}
+                    <div className="grid grid-cols-3 gap-2 text-center bg-white dark:bg-zinc-900 p-2 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                      <div className="px-2">
+                        <p className="text-[9px] uppercase font-bold text-zinc-400">Cash Out (দেওয়া হয়েছিল)</p>
+                        <p className="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 font-mono">৳{cashOut}</p>
+                      </div>
+                      <div className="px-2 border-x border-zinc-100 dark:border-zinc-800">
+                        <p className="text-[9px] uppercase font-bold text-zinc-400">Actual Spend (বাজার খরচ)</p>
+                        <p className="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 font-mono">৳{actualSpend}</p>
+                      </div>
+                      <div className="px-2">
+                        <p className="text-[9px] uppercase font-bold text-zinc-400">Cash Return (ফেরতযোগ্য)</p>
+                        <p className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">৳{cashReturn}</p>
+                      </div>
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2 justify-end">
+                      {exp.receiptImage && (
                         <button
                           onClick={() => setEnlargedReceipt(exp.receiptImage!)}
-                          className="p-1 text-emerald-600 hover:text-emerald-500 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          <ImageIcon className="w-3.5 h-3.5" /> View Receipt
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          <span>Receipt</span>
                         </button>
-                      ) : (
-                        <span className="text-[10px] text-zinc-400">No Image</span>
                       )}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        exp.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : exp.status === 'rejected' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500 animate-pulse'
-                      }`}>
-                        {exp.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      {exp.status === 'pending' ? (
-                        <div className="inline-flex gap-1.5">
+
+                      <button
+                        onClick={() => setExpandedExpenseId(isExpanded ? null : exp.id)}
+                        className="px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Items ({exp.items?.length || 0})</span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+
+                      {exp.status === 'pending' && (
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleExpenseStatus(exp.id, 'approved')}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer"
-                            title="Accept Bajar & Deduct from Mess Cash"
+                            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+                            title="Verify Spend & Approve"
                           >
                             <Check className="w-3.5 h-3.5" />
-                            <span>Accept Bajar</span>
+                            <span>Verify & Approve</span>
                           </button>
                           <button
                             onClick={() => handleExpenseStatus(exp.id, 'rejected')}
-                            className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all cursor-pointer"
-                            title="Reject Expense"
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors cursor-pointer"
+                            title="Reject bill"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      ) : (
-                        <span className="text-[10px] text-zinc-400 font-mono capitalize">{exp.status}</span>
                       )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+
+                  {/* Expanded Itemized Checklist */}
+                  {isExpanded && (
+                    <div className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
+                      <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-2">
+                        Itemized Purchase List (আইটেমভিত্তিক বিবরণ)
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {exp.items?.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 flex items-center justify-between"
+                          >
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-zinc-900 dark:text-white">
+                                  {item.name}
+                                </span>
+                                {item.isExtra && (
+                                  <span className="text-[9px] px-1 py-0.2 bg-orange-500/10 text-orange-600 dark:text-orange-400 font-extrabold rounded">
+                                    Extra
+                                  </span>
+                                )}
+                              </div>
+                              {item.qty && (
+                                <p className="text-[10px] text-zinc-400">Qty: {item.qty}</p>
+                              )}
+                            </div>
+                            <span className="text-xs font-extrabold text-zinc-900 dark:text-white font-mono">
+                              ৳{item.cost}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

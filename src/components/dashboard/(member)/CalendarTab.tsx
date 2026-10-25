@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ShoppingCart, Utensils, Sun, Users, ShoppingBag, DollarSign, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
 import { CalendarActivityData, BazaarDutyInfo } from '@/src/types';
+import LiveBazaarShopperView from './live-bazaar-shopper-view';
 
 interface CalendarTabProps {
   token: string;
@@ -442,67 +443,24 @@ export default function CalendarTab({ token, onError }: CalendarTabProps) {
         </div>
       )}
 
-      {/* SUBMIT BAJAR EXPENSE MODAL */}
-      {showSubmitModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-md w-full border border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-orange-500" />
-                Submit Bajar List & Actual Cost
-              </h3>
-              <button onClick={() => setShowSubmitModal(false)} className="text-zinc-400 hover:text-zinc-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmitBazaarExpense} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Purchased Items & Individual Costs
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={bazaarItemsInput}
-                  onChange={(e) => setBazaarItemsInput(e.target.value)}
-                  placeholder="e.g. Chicken - 600, Rice - 400, Oil - 200, Veggies - 150"
-                  className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-medium text-zinc-900 dark:text-white"
-                />
-                <p className="text-[10px] text-zinc-500 mt-1">Format: ItemName - Cost (Comma separated)</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Total Actual Bajar Cost (৳)
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={bazaarTotalCostInput}
-                  onChange={(e) => setBazaarTotalCostInput(e.target.value)}
-                  placeholder="e.g. 1350"
-                  className="w-full px-3.5 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm font-bold text-orange-500"
-                />
-              </div>
-
-              <div className="pt-2 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowSubmitModal(false)}
-                  className="flex-1 py-2.5 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold rounded-xl text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingExpense}
-                  className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {submittingExpense ? 'Submitting...' : 'Submit Bajar Cost'}
-                </button>
-              </div>
-            </form>
+      {/* LIVE BAZAAR SHOPPER VIEW MODAL */}
+      {showSubmitModal && bazaarDuty && bazaarDuty.assignmentId && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="max-w-lg w-full">
+            <LiveBazaarShopperView
+              assignmentId={bazaarDuty.assignmentId}
+              date={bazaarDuty.date}
+              partnerName={bazaarDuty.pairPartnerName}
+              initialItems={bazaarDuty.shoppingList}
+              budget={bazaarDuty.budget}
+              token={token}
+              onSubmitted={() => {
+                setShowSubmitModal(false);
+                fetchBazaarDuty(selectedDate || new Date().toISOString().split('T')[0]);
+                fetchActivities();
+              }}
+              onClose={() => setShowSubmitModal(false)}
+            />
           </div>
         </div>
       )}

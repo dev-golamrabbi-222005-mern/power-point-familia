@@ -100,8 +100,8 @@ export default function ManagerOverviewTab({ token, onError }: ManagerOverviewTa
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* === KIP METRIC CARDS === */}
-      <div className="grid grid-cols-2 gap-2 md:gap-4 md:grid-cols-4">
+      {/* === KPI METRIC CARDS === */}
+      <div className="grid grid-cols-2 gap-2 md:gap-4 md:grid-cols-3 lg:grid-cols-5">
         {/* Mess Total Meal Today */}
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-3 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700">
           <div className="flex items-center justify-between mb-2">
@@ -156,6 +156,24 @@ export default function ManagerOverviewTab({ token, onError }: ManagerOverviewTa
             ৳{overview.mealCostThisMonth}
           </p>
           <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">this month</p>
+        </div>
+
+        {/* Live Meal Rate */}
+        <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-3 md:p-4 rounded-lg border border-red-200 dark:border-red-700">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs md:text-sm text-red-700 dark:text-red-300 font-semibold">
+              Live Rate
+            </p>
+            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-red-900 dark:text-red-100">
+            ৳{overview.liveMealRate ? overview.liveMealRate.toFixed(2) : '0.00'}
+          </p>
+          <p className="text-[11px] text-red-600 dark:text-red-400 mt-1 leading-tight">
+            {overview.liveMealRate && overview.liveMealRate > 0
+              ? 'per meal (Calculated live)'
+              : `No meals logged yet (Est. Base: ৳${overview.baseRate || 45})`}
+          </p>
         </div>
       </div>
 

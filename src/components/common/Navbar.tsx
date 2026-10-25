@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/src/context/AuthContext";
-import { Logo } from "../Logo";
+import { PPFLogo } from "@/src/components/shared/PPFLogo";
 import {
   LayoutDashboard,
   LogIn,
@@ -38,8 +38,8 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
-          <Link href="/" className="flex items-center group scale-80">
-            <Logo className="transition-transform group-hover:scale-105" />
+          <Link href="/" className="flex items-center group">
+            <PPFLogo size="md" className="transition-transform group-hover:scale-105" />
           </Link>
 
           {/* Nav Links */}

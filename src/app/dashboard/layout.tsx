@@ -9,6 +9,7 @@ import QuickMealModal from '@/src/components/dashboard/QuickMealModal';
 import QuickExpenseModal from '@/src/components/dashboard/QuickExpenseModal';
 import QuickApproveModal from '@/src/components/dashboard/QuickApproveModal';
 import ProfileSettingsModal from '@/src/components/dashboard/ProfileSettingsModal';
+import GlobalLiveBazaarModal from '@/src/components/dashboard/GlobalLiveBazaarModal';
 
 export default function DashboardRouteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -36,6 +37,7 @@ export default function DashboardRouteLayout({ children }: { children: React.Rea
         <QuickExpenseModal />
         <QuickApproveModal />
         <ProfileSettingsModal />
+        <GlobalLiveBazaarModal />
       </div>
     </DashboardProvider>
   );

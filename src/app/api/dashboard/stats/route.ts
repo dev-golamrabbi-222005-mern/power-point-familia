@@ -35,7 +35,8 @@ export async function GET(req: NextRequest) {
       
     const liveMealRate = allMealsCount > 0 && totalBazaarExpenses > 0
       ? Math.round((totalBazaarExpenses / allMealsCount) * 100) / 100
-      : baseRate;
+      : 0;
+    const calculationRate = liveMealRate > 0 ? liveMealRate : baseRate;
 
     // A: Calculate Member statistics (approved deposits, consumed/booked meals, carry forward)
     const dbUser = db.users.find(u => u.id === userId);

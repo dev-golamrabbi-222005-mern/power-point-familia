@@ -40,15 +40,7 @@
       "createdAt": "2026-07-21T12:35:19.562Z",
       "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C",
       "autoBookDisabled": false,
-      "fixedCosts": {
-        "rent": 1935,
-        "electricity": 400,
-        "wifi": 180,
-        "gas": 200,
-        "servant": 400,
-        "customFixedTotal": 3115
-      },
-      "pastMonthDue": 230
+      "bazaarCount": 1
     },
     {
       "id": "user-manager",
@@ -59,6 +51,39 @@
       "status": "approved",
       "createdAt": "2026-07-21T12:35:19.562Z",
       "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
+    },
+    {
+      "id": "user-1785253982368",
+      "email": "mohibbullah2323@gmail.com",
+      "name": "Mohibbullah",
+      "phone": "01711872691",
+      "role": "member",
+      "status": "approved",
+      "createdAt": "2026-07-28T15:53:02.368Z",
+      "passwordHash": "$2b$10$L3I8ZPQsSSd9e6KA06XJPe26PxzWlJJuDAkausaOjIGV3KKogpPZ6",
+      "bazaarCount": 0
+    },
+    {
+      "id": "user-1785253831668",
+      "email": "ifatzaman2k4@gmail.com",
+      "name": "Ifat",
+      "phone": "01309223211",
+      "role": "member",
+      "status": "approved",
+      "createdAt": "2026-07-28T15:50:31.668Z",
+      "passwordHash": "$2b$10$yYOCZH1GX3ZPU7vPJ2ykT.w/zTbeOOJHJQGxnqoPiXw136ykFMPaW",
+      "bazaarCount": 0
+    },
+    {
+      "id": "user-1785254225912",
+      "email": "samiuljumman@gmail.com",
+      "name": "Samiul",
+      "phone": "01987452103",
+      "role": "member",
+      "status": "approved",
+      "createdAt": "2026-07-28T15:57:05.912Z",
+      "passwordHash": "$2b$10$sCCxOEJbzO0.FEAMNjA0CO5gb5M8TxPv2ofjeUEgVgtuyMwRvGsWq",
+      "bazaarCount": 0
     }
   ],
   "menus": [
@@ -99,84 +124,167 @@
   ],
   "records": [
     {
-      "id": "rec-1784710631975-741",
-      "userId": "user-member",
-      "date": "2026-07-21",
-      "mealType": "lunch",
-      "count": 1
-    },
-    {
       "id": "rec-1784711143782-518",
       "userId": "user-member",
       "date": "2026-07-21",
       "mealType": "dinner",
-      "count": 1
+      "count": 5
     },
     {
-      "id": "rec-1784730953716-902",
+      "id": "rec-1792916225410-0.8751706193427412",
       "userId": "user-member",
-      "date": "2026-07-22",
+      "date": "2026-10-25",
       "mealType": "lunch",
-      "count": 1
-    },
-    {
-      "id": "rec-1784816896906-0.09725567538406987",
-      "userId": "user-member",
-      "date": "2026-07-24",
-      "mealType": "dinner",
-      "count": 1
+      "count": 0,
+      "requestStatus": "accepted",
+      "requestReason": "অফিসে লাঞ্চের দাওয়াত আছে",
+      "requestedAt": "2026-10-25T08:17:05.410Z",
+      "resolvedBy": "user-manager",
+      "resolvedAt": "2026-10-25T08:17:09.141Z"
     }
   ],
-  "deposits": [
+  "deposits": [],
+  "bazaarAssignments": [
     {
-      "id": "dep-1784730917099",
+      "id": "bazaar-1792916233438",
       "userId": "user-member",
-      "amount": 1000,
-      "date": "2026-07-22",
-      "paymentMethod": "bKash",
-      "transactionId": "sdfsdfsdf",
+      "member2Id": null,
+      "date": "2026-10-25",
+      "shoppingList": [
+        "মুরগি ২ কেজি",
+        "চাল ৫ কেজি",
+        "তেল ১ লিটার"
+      ],
+      "budget": 1500,
+      "allocatedCash": 1500,
+      "items": [
+        {
+          "name": "মুরগি ২ কেজি",
+          "qty": "2 kg",
+          "cost": 650,
+          "checked": true
+        },
+        {
+          "name": "চাল ৫ কেজি",
+          "qty": "5 kg",
+          "cost": 350,
+          "checked": true
+        },
+        {
+          "name": "তেল ১ লিটার",
+          "qty": "1 L",
+          "cost": 180,
+          "checked": true
+        },
+        {
+          "name": "ধনেপাতা ও কাঁচামরিচ",
+          "qty": "250 gm",
+          "cost": 40,
+          "isExtra": true,
+          "checked": true
+        }
+      ],
+      "status": "verified",
+      "returnedCash": 280,
+      "submittedAt": "2026-10-25T08:17:15.086Z",
+      "submittedBy": "user-member",
+      "verifiedAt": "2026-10-25T08:17:17.831Z",
+      "verifiedBy": "user-manager"
+    }
+  ],
+  "bazaarExpenses": [
+    {
+      "id": "bexp-1792916235086",
+      "assignmentId": "bazaar-1792916233438",
+      "userId": "user-member",
+      "date": "2026-10-25",
+      "allocatedCash": 1500,
+      "returnedCash": 280,
+      "items": [
+        {
+          "name": "মুরগি ২ কেজি",
+          "qty": "2 kg",
+          "cost": 650,
+          "checked": true
+        },
+        {
+          "name": "চাল ৫ কেজি",
+          "qty": "5 kg",
+          "cost": 350,
+          "checked": true
+        },
+        {
+          "name": "তেল ১ লিটার",
+          "qty": "1 L",
+          "cost": 180,
+          "checked": true
+        },
+        {
+          "name": "ধনেপাতা ও কাঁচামরিচ",
+          "qty": "250 gm",
+          "cost": 40,
+          "isExtra": true,
+          "checked": true
+        }
+      ],
+      "totalCost": 1220,
       "status": "approved",
-      "remarks": "sdfadf"
+      "remarks": "আলু ও কাঁচামরিচ অতিরিক্ত নেওয়া হয়েছে",
+      "receiptImage": null,
+      "submittedAt": "2026-10-25T08:17:15.086Z",
+      "verifiedAt": "2026-10-25T08:17:17.831Z",
+      "verifiedBy": "user-manager"
     }
   ],
-  "bazaarAssignments": [],
-  "bazaarExpenses": [],
   "bazaarPairs": [],
   "weeklyPayments": [],
   "contactMessages": [],
   "sharedBills": [],
-  "memberBillPayments": [],
+  "memberBillPayments": [
+    {
+      "id": "billpay-1784715374169",
+      "userId": "user-member",
+      "month": "2026-07",
+      "type": "rent",
+      "amount": 2000,
+      "paidAt": "2026-07-22T10:16:14.169Z",
+      "depositId": null
+    },
+    {
+      "id": "billpay-1784715512926",
+      "userId": "user-member",
+      "month": "2026-07",
+      "type": "rent",
+      "amount": 2000,
+      "paidAt": "2026-07-22T10:18:32.926Z",
+      "depositId": null
+    }
+  ],
   "refundRequests": [],
+  "monthlySummaries": [],
+  "mealToggleLog": [
+    {
+      "id": "log-1792916229141-0.4058042167514355",
+      "userId": "user-member",
+      "date": "2026-10-25",
+      "mealType": "lunch",
+      "action": "off",
+      "oldCount": 1,
+      "newCount": 0,
+      "timestamp": "2026-10-25T08:17:09.141Z"
+    }
+  ],
+  "adminChangeRequests": [],
   "settings": {
     "mealRate": 45,
     "weeklyPayment": 500,
     "initialWeekPayment": 1000,
     "monthlyFlatRate": 2500,
-    "startWeekDate": "2026-07-22",
-    "currentPairIndex": 0
-  },
-  "mealToggleLog": [
-    {
-      "id": "log-1784816896907-0.5178391110778778",
-      "userId": "user-member",
-      "date": "2026-07-24",
-      "mealType": "dinner",
-      "action": "off",
-      "oldCount": 0,
-      "newCount": 0,
-      "timestamp": "2026-07-23T14:28:16.907Z"
-    },
-    {
-      "id": "log-1784816901582-0.6537431592837314",
-      "userId": "user-member",
-      "date": "2026-07-24",
-      "mealType": "dinner",
-      "action": "on",
-      "oldCount": 0,
-      "newCount": 1,
-      "timestamp": "2026-07-23T14:28:21.582Z"
-    }
-  ],
-  "monthlySummaries": [],
-  "adminChangeRequests": []
+    "startWeekDate": "2026-10-25",
+    "autoBookMeals": true,
+    "currentPairIndex": 0,
+    "financeVisibilityDurationMinutes": 60,
+    "_id": "global_settings",
+    "totalCashInHand": 0
+  }
 }

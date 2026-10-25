@@ -12,6 +12,11 @@ export interface MealRecord {
   date: string; // YYYY-MM-DD
   mealType: 'lunch' | 'dinner';
   count: number; // e.g. 0, 1, 2, etc.
+  requestStatus?: 'none' | 'pending' | 'accepted' | 'rejected';
+  requestReason?: string;
+  requestedAt?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
 }
 
 export interface MealCostData {
@@ -64,3 +69,17 @@ export interface MealToggleLog {
   newCount: number;
   timestamp: string;
 }
+
+export interface EmergencyMealRequest {
+  id: string;
+  userId: string;
+  userName?: string;
+  date: string;
+  mealType: 'lunch' | 'dinner';
+  reason: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+

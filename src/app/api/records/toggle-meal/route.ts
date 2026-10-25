@@ -29,15 +29,39 @@ export async function POST(req: NextRequest) {
     const db = getDb();
 
     const userId = user!.id;
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
     const requestDate = new Date(date + 'T00:00:00');
     const todayDate = new Date(today + 'T00:00:00');
     const daysAhead = Math.floor((requestDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+    const isToday = (date === today);
+    const currentHour = now.getHours();
 
-    // Validate: Can only turn off meals up to 3 days in advance
+    // Check cut-off time for today if attempting to turn OFF:
+    // Lunch cut-off: 09:00 AM | Dinner cut-off: 03:00 PM (15:00)
+    if (action === 'off' && isToday) {
+      if (mealType === 'lunch' && currentHour >= 9) {
+        return NextResponse.json({
+          message: 'Lunch cut-off time (09:00 AM) has passed. Please submit a "Request Meal Off" to the manager.',
+          cutoffPassed: true,
+          mealType: 'lunch',
+          cutoffTime: '09:00 AM',
+        }, { status: 400 });
+      }
+      if (mealType === 'dinner' && currentHour >= 15) {
+        return NextResponse.json({
+          message: 'Dinner cut-off time (03:00 PM) has passed. Please submit a "Request Meal Off" to the manager.',
+          cutoffPassed: true,
+          mealType: 'dinner',
+          cutoffTime: '03:00 PM',
+        }, { status: 400 });
+      }
+    }
+
+    // Validate: Can only turn off meals up to 3 days in advance (rolling 3-day window)
     if (action === 'off' && daysAhead > 3) {
       return NextResponse.json({
-        message: 'Can only turn off meals up to 3 days in advance.',
+        message: 'Can only turn off meals up to 3 days in advance (Rolling 3-day window).',
         maxDaysAllowed: 3,
         daysRequested: daysAhead,
       }, { status: 400 });
@@ -134,15 +158,42 @@ export async function GET(req: NextRequest) {
     const db = getDb();
 
     const userId = user!.id;
-    const records = db.records.filter(r => r.userId === userId && r.date === date);
+    const lunchRecord = db.records.find(r => r.userId === userId && r.date === date && r.mealType === 'lunch');
+    const dinnerRecord = db.records.find(r => r.userId === userId && r.date === date && r.mealType === 'dinner');
+
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const isToday = (date === today);
+    const currentHour = now.getHours();
+
+    const formattedLunch = {
+      mealType: 'lunch' as const,
+      isOn: lunchRecord ? lunchRecord.count > 0 : true,
+      count: lunchRecord ? lunchRecord.count : 1,
+      requestStatus: lunchRecord?.requestStatus || 'none',
+      requestReason: lunchRecord?.requestReason,
+      requestedAt: lunchRecord?.requestedAt,
+      isCutoffPassed: isToday && currentHour >= 9,
+    };
+
+    const formattedDinner = {
+      mealType: 'dinner' as const,
+      isOn: dinnerRecord ? dinnerRecord.count > 0 : true,
+      count: dinnerRecord ? dinnerRecord.count : 1,
+      requestStatus: dinnerRecord?.requestStatus || 'none',
+      requestReason: dinnerRecord?.requestReason,
+      requestedAt: dinnerRecord?.requestedAt,
+      isCutoffPassed: isToday && currentHour >= 15,
+    };
 
     return NextResponse.json({
       date,
-      records: records.map(r => ({
-        mealType: r.mealType,
-        isOn: r.count > 0,
-        count: r.count,
-      })),
+      isToday,
+      cutoffTimes: {
+        lunch: '09:00 AM',
+        dinner: '03:00 PM',
+      },
+      records: [formattedLunch, formattedDinner],
     });
   } catch (error) {
     console.error('Meal status fetch error', error);

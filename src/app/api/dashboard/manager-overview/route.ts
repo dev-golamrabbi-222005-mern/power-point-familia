@@ -59,7 +59,10 @@ export async function GET(req: NextRequest) {
 
     const liveMealRate = allMealsCount > 0 && totalBazaarExpenses > 0
       ? Math.round((totalBazaarExpenses / allMealsCount) * 100) / 100
-      : baseRate;
+      : 0;
+
+    // Effective rate used for forward budget estimations
+    const calculationRate = liveMealRate > 0 ? liveMealRate : baseRate;
 
     const activeMembers = db.users.filter(u => u.role === 'member' && u.status === 'approved');
     const memberCount = Math.max(activeMembers.length, 1);
@@ -147,6 +150,8 @@ export async function GET(req: NextRequest) {
       mealCostThisWeek,
       mealCostThisMonth,
       liveMealRate,
+      baseRate,
+      hasActiveCalculation: allMealsCount > 0 && totalBazaarExpenses > 0,
       today: todayStr,
       fixedBills,
       pastMonthComparison,

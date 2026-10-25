@@ -1,6 +1,10 @@
 import React from 'react';
 
-export const PPFLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
+export const PPFLogo: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string; onClick?: () => void }> = ({
+  size = 'md',
+  className = '',
+  onClick,
+}) => {
   const sizes = {
     sm: 'text-base',
     md: 'text-xl',
@@ -8,7 +12,7 @@ export const PPFLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }
   };
 
   return (
-    <div className="flex items-center gap-2 select-none">
+    <div onClick={onClick} className={`flex items-center gap-2 select-none ${className}`}>
       <div className="relative flex items-center justify-center p-2 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-xl shadow-md text-white font-black tracking-tighter">
         <span className={sizes[size]}>PPF</span>
       </div>
@@ -21,3 +25,5 @@ export const PPFLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }
     </div>
   );
 };
+
+export default PPFLogo;

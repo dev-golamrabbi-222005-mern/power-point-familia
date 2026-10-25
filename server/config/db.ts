@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { MongoClient } from 'mongodb';
-import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest, MonthlySummary, MealToggleLog, AdminChangeRequest } from '../../src/types';
+import { User, MealMenu, MealRecord, Deposit, SystemSettings, BazaarAssignment, BazaarExpense, BazaarPair, WeeklyPayment, ContactMessage, SharedBill, MemberBillPayment, RefundRequest, MonthlySummary, MealToggleLog, AdminChangeRequest, EmergencyMealRequest } from '../../src/types';
 
 export interface DatabaseSchema {
   users: (User & { passwordHash: string })[];
@@ -20,6 +20,7 @@ export interface DatabaseSchema {
   monthlySummaries: MonthlySummary[];
   mealToggleLog?: MealToggleLog[];
   adminChangeRequests?: AdminChangeRequest[];
+  emergencyMealRequests?: EmergencyMealRequest[];
   settings: SystemSettings;
 }
 
@@ -72,8 +73,20 @@ export function getInitialDb(): DatabaseSchema {
     bazaarCount: 0,
   };
 
+  const rabbiAdmin: User & { passwordHash: string } = {
+    id: 'user_admin_rabbi',
+    email: 'g.rabbi.dev@gmail.com',
+    name: 'Golam Rabbi (Admin)',
+    phone: '+8801700000000',
+    role: 'admin',
+    status: 'approved',
+    createdAt: new Date().toISOString(),
+    passwordHash: bcrypt.hashSync('admin123', 10),
+    bazaarCount: 0,
+  };
+
   return {
-    users: [initialUser],
+    users: [initialUser, rabbiAdmin],
     menus: [],
     records: [],
     deposits: [],
@@ -88,6 +101,7 @@ export function getInitialDb(): DatabaseSchema {
     monthlySummaries: [],
     mealToggleLog: [],
     adminChangeRequests: [],
+    emergencyMealRequests: [],
     settings: DEFAULT_SETTINGS,
   };
 }
@@ -109,6 +123,7 @@ export function getDb(): DatabaseSchema {
       ...parsed,
       mealToggleLog: parsed.mealToggleLog || [],
       adminChangeRequests: parsed.adminChangeRequests || [],
+      emergencyMealRequests: parsed.emergencyMealRequests || [],
       settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
     };
     return memoryDb!;

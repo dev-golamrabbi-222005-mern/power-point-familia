@@ -5,10 +5,10 @@ import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { error } = authenticate(req, ['manager', 'admin']);
+    const { error, user } = authenticate(req, ['manager', 'admin']);
     if (error) return error;
 
-    const { status } = await req.json();
+    const { status, allocatedCash, returnedCash } = await req.json();
 
     if (!status || !['approved', 'rejected'].includes(status)) {
       return NextResponse.json(
@@ -28,6 +28,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const prevStatus = db.bazaarExpenses[expenseIndex].status;
     db.bazaarExpenses[expenseIndex].status = status;
 
+    if (allocatedCash !== undefined) db.bazaarExpenses[expenseIndex].allocatedCash = Number(allocatedCash);
+    if (returnedCash !== undefined) db.bazaarExpenses[expenseIndex].returnedCash = Number(returnedCash);
+
+    if (status === 'approved') {
+      db.bazaarExpenses[expenseIndex].verifiedAt = new Date().toISOString();
+      db.bazaarExpenses[expenseIndex].verifiedBy = user!.id;
+    }
+
     // Deduct expense from manager cash in hand if newly approved
     if (status === 'approved' && prevStatus !== 'approved') {
       const expenseAmount = db.bazaarExpenses[expenseIndex].totalCost || 0;
@@ -40,6 +48,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     );
     if (assignment) {
       assignment.status = status === 'approved' ? 'verified' : 'pending';
+      if (status === 'approved') {
+        assignment.verifiedAt = new Date().toISOString();
+        assignment.verifiedBy = user!.id;
+      }
     }
 
     // Auto-advance pair: check if both members of the current active pair are done (verified or skipped)

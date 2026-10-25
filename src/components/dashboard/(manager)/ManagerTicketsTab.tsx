@@ -17,6 +17,7 @@ import {
   User
 } from 'lucide-react';
 import { Deposit, RefundRequest, User as UserType } from '@/src/types';
+import EmergencyMealRequestCard from './emergency-meal-request-card';
 
 interface ManagerTicketsTabProps {
   token: string;
@@ -28,6 +29,7 @@ interface ManagerTicketsTabProps {
 export default function ManagerTicketsTab({ token, onError, onRefreshData, prefillWarnUserId }: ManagerTicketsTabProps) {
   const [deposits, setDeposits] = useState<(Deposit & { userEmail?: string })[]>([]);
   const [refunds, setRefunds] = useState<RefundRequest[]>([]);
+  const [lateRequests, setLateRequests] = useState<any[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,15 +50,17 @@ export default function ManagerTicketsTab({ token, onError, onRefreshData, prefi
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const [depRes, refRes, usersRes] = await Promise.all([
+      const [depRes, refRes, usersRes, lateRes] = await Promise.all([
         fetch('/api/deposits', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/refunds', { headers: { Authorization: `Bearer ${token}` } }),
         fetch('/api/members', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/records/request-meal-off', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       if (depRes.ok) setDeposits(await depRes.json());
       if (refRes.ok) setRefunds(await refRes.json());
       if (usersRes.ok) setUsers(await usersRes.json());
+      if (lateRes.ok) setLateRequests(await lateRes.json());
     } catch (err) {
       console.error('Error fetching tickets', err);
       onError?.('Failed to load tickets');
@@ -199,6 +203,34 @@ export default function ManagerTicketsTab({ token, onError, onRefreshData, prefi
           <span>Issue Warning / Deadline Ticket</span>
         </button>
       </div>
+
+      {/* Emergency Meal-Off Requests Section */}
+      {lateRequests.filter(r => r.requestStatus === 'pending').length > 0 && (
+        <div className="space-y-3 p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              <span>Urgent Meal-Off Requests ({lateRequests.filter(r => r.requestStatus === 'pending').length})</span>
+            </h3>
+            <span className="text-[10px] text-amber-300">Action needed before meal cooking</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {lateRequests
+              .filter(r => r.requestStatus === 'pending')
+              .map(req => (
+                <EmergencyMealRequestCard
+                  key={req.id}
+                  request={req}
+                  token={token}
+                  onResolved={() => {
+                    fetchTickets();
+                    onRefreshData?.();
+                  }}
+                />
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800">

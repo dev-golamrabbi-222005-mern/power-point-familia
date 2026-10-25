@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const { error, user } = authenticate(req, ['manager', 'admin']);
     if (error) return error;
 
-    const { userId, member2Id, date, shoppingList, budget } = await req.json();
+    const { userId, member2Id, date, shoppingList, budget, allocatedCash, items } = await req.json();
 
     if (!userId || !date) {
       return NextResponse.json(
@@ -61,13 +61,30 @@ export async function POST(req: NextRequest) {
     await ensureDbInit();
     const db = getDb();
 
+    const cash = Number(allocatedCash ?? budget ?? 0);
+    const parsedItems = Array.isArray(items) && items.length > 0
+      ? items
+      : (Array.isArray(shoppingList) ? shoppingList.map((itemStr: string) => ({
+          name: typeof itemStr === 'string' ? itemStr : (itemStr as any).name || 'Item',
+          qty: (itemStr as any).qty || '',
+          cost: Number((itemStr as any).cost || 0),
+          isExtra: false,
+          checked: false,
+        })) : []);
+
+    const stringList = Array.isArray(shoppingList) && shoppingList.length > 0
+      ? shoppingList
+      : parsedItems.map((i: any) => i.name);
+
     const newAssignment: BazaarAssignment = {
       id: `bazaar-${Date.now()}`,
       userId,
       member2Id: member2Id || undefined,
       date,
-      shoppingList: shoppingList || [],
-      budget: Number(budget || 0),
+      shoppingList: stringList,
+      budget: cash,
+      allocatedCash: cash,
+      items: parsedItems,
       status: 'pending',
     };
 

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const baseRate = db.settings?.mealRate || 45;
     const liveMealRate = allMealsCount > 0 && totalBazaarExpenses > 0
       ? Math.round((totalBazaarExpenses / allMealsCount) * 100) / 100
-      : baseRate;
+      : 0;
 
     // My total meal (all time)
     const myTotalMeals = db.records
@@ -63,6 +63,8 @@ export async function GET(req: NextRequest) {
       todayMessLunch,
       todayMessDinner,
       liveMealRate,
+      baseRate,
+      hasActiveCalculation: allMealsCount > 0 && totalBazaarExpenses > 0,
       today,
     });
   } catch (error) {

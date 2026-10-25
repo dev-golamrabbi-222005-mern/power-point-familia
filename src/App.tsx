@@ -8,7 +8,7 @@ import MemberDashboard from "./components/MemberDashboard";
 import ManagerDashboard from "./components/ManagerDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import { Utensils, Shield, KeyRound, Sparkles } from "lucide-react";
-import { Logo } from "./components/Logo";
+import { PPFLogo } from "./components/shared/PPFLogo";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -373,7 +373,7 @@ export default function App() {
                   </text>
                 </g>
               </svg> */}
-            <Logo />
+            <PPFLogo />
 
             <div className="flex items-center gap-3">
               <a
@@ -457,7 +457,7 @@ export default function App() {
         <footer className="bg-[#09090b] border-t border-zinc-800/85 py-10 mt-auto">
           <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center">
-              <Logo />
+              <PPFLogo />
             </div>
 
             <div className="flex items-center gap-6">

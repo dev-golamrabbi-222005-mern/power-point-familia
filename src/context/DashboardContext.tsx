@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
-import { User, MealMenu, Deposit } from '@/src/types';
+import { User, MealMenu, Deposit, BazaarAssignment } from '@/src/types';
 
 interface DashboardContextType {
   user: User | null;
@@ -11,15 +11,22 @@ interface DashboardContextType {
   setActiveRoleView: (role: 'manager' | 'member') => void;
   toggleRoleView: () => void;
   mealRate: number;
+  baseRate: number;
+  liveMealRate: number;
+  hasActiveCalculation: boolean;
   menus: MealMenu[];
   allUsers: User[];
   loadingUsers: boolean;
   loadingSystem: boolean;
   pendingDepositsCount: number;
   pendingUsersCount: number;
+  pendingMealRequestsCount: number;
+  todayBazaarAssignment: BazaarAssignment | null;
   refreshSystemData: () => Promise<void>;
   refreshUsers: () => Promise<void>;
   refreshDeposits: () => Promise<void>;
+  refreshBazaarAssignment: () => Promise<void>;
+  refreshMealRequests: () => Promise<void>;
   refreshAll: () => Promise<void>;
   // Modal states
   isQuickMealOpen: boolean;
@@ -30,6 +37,8 @@ interface DashboardContextType {
   setIsQuickApproveOpen: (open: boolean) => void;
   isProfileOpen: boolean;
   setIsProfileOpen: (open: boolean) => void;
+  isLiveBazaarOpen: boolean;
+  setIsLiveBazaarOpen: (open: boolean) => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -39,17 +48,23 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   const [activeRoleView, setActiveRoleView] = useState<'manager' | 'member'>('manager');
   const [mealRate, setMealRate] = useState<number>(45);
+  const [baseRate, setBaseRate] = useState<number>(45);
+  const [liveMealRate, setLiveMealRate] = useState<number>(0);
+  const [hasActiveCalculation, setHasActiveCalculation] = useState<boolean>(false);
   const [menus, setMenus] = useState<MealMenu[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(false);
   const [loadingSystem, setLoadingSystem] = useState<boolean>(true);
   const [pendingDepositsCount, setPendingDepositsCount] = useState<number>(0);
+  const [pendingMealRequestsCount, setPendingMealRequestsCount] = useState<number>(0);
+  const [todayBazaarAssignment, setTodayBazaarAssignment] = useState<BazaarAssignment | null>(null);
 
   // Modal states
   const [isQuickMealOpen, setIsQuickMealOpen] = useState(false);
   const [isQuickExpenseOpen, setIsQuickExpenseOpen] = useState(false);
   const [isQuickApproveOpen, setIsQuickApproveOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLiveBazaarOpen, setIsLiveBazaarOpen] = useState(false);
 
   const toggleRoleView = () => {
     setActiveRoleView(prev => (prev === 'manager' ? 'member' : 'manager'));
@@ -59,9 +74,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [menuRes, settingsRes] = await Promise.all([
+      const [menuRes, settingsRes, overviewRes] = await Promise.all([
         fetch('/api/menu', { headers }),
         fetch('/api/settings', { headers }),
+        fetch('/api/dashboard/member-overview', { headers }),
       ]);
 
       if (menuRes.ok) {
@@ -70,7 +86,15 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       }
       if (settingsRes.ok) {
         const sData = await settingsRes.json();
-        setMealRate(sData.mealRate || 45);
+        const base = sData.mealRate || 45;
+        setBaseRate(base);
+      }
+      if (overviewRes.ok) {
+        const ovData = await overviewRes.json();
+        const live = ovData.liveMealRate || 0;
+        setLiveMealRate(live);
+        setHasActiveCalculation(ovData.hasActiveCalculation ?? (live > 0));
+        setMealRate(live > 0 ? live : (ovData.baseRate || 45));
       }
     } catch (e) {
       console.error('Error fetching dashboard system data', e);
@@ -113,9 +137,52 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token, user]);
 
+  const refreshBazaarAssignment = useCallback(async () => {
+    if (!token || !user) return;
+    try {
+      const res = await fetch('/api/bazaar/assign', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const assignments: BazaarAssignment[] = await res.json();
+        const todayStr = new Date().toISOString().split('T')[0];
+        const assigned = assignments.find(
+          a => (a.userId === user.id || a.member2Id === user.id) &&
+               a.date === todayStr &&
+               (a.status === 'pending' || a.status === 'submitted')
+        );
+        setTodayBazaarAssignment(assigned || null);
+      }
+    } catch (e) {
+      console.error('Error fetching today bazaar assignment', e);
+    }
+  }, [token, user]);
+
+  const refreshMealRequests = useCallback(async () => {
+    if (!token || !user) return;
+    try {
+      const res = await fetch('/api/records/request-meal-off', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const requests = await res.json();
+        const pending = requests.filter((r: any) => r.requestStatus === 'pending').length;
+        setPendingMealRequestsCount(pending);
+      }
+    } catch (e) {
+      console.error('Error fetching meal requests', e);
+    }
+  }, [token, user]);
+
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshSystemData(), refreshUsers(), refreshDeposits()]);
-  }, [refreshSystemData, refreshUsers, refreshDeposits]);
+    await Promise.all([
+      refreshSystemData(), 
+      refreshUsers(), 
+      refreshDeposits(),
+      refreshBazaarAssignment(),
+      refreshMealRequests()
+    ]);
+  }, [refreshSystemData, refreshUsers, refreshDeposits, refreshBazaarAssignment, refreshMealRequests]);
 
   useEffect(() => {
     if (token) {
@@ -134,15 +201,22 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         setActiveRoleView,
         toggleRoleView,
         mealRate,
+        baseRate,
+        liveMealRate,
+        hasActiveCalculation,
         menus,
         allUsers,
         loadingUsers,
         loadingSystem,
         pendingDepositsCount,
         pendingUsersCount,
+        pendingMealRequestsCount,
+        todayBazaarAssignment,
         refreshSystemData,
         refreshUsers,
         refreshDeposits,
+        refreshBazaarAssignment,
+        refreshMealRequests,
         refreshAll,
         isQuickMealOpen,
         setIsQuickMealOpen,
@@ -152,6 +226,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         setIsQuickApproveOpen,
         isProfileOpen,
         setIsProfileOpen,
+        isLiveBazaarOpen,
+        setIsLiveBazaarOpen,
       }}
     >
       {children}

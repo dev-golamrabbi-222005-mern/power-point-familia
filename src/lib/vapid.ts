@@ -1,14 +1,22 @@
 import webpush from 'web-push';
 
-// Default VAPID keys for zero-config Web Push functionality
-export const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa1Fpt0L0z6M_V_F_P1hYh4R02hC3X5v_j3Bv3S9S1F2x4E6v8G0H2I4K6L8M0';
-export const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || 'u1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V';
-export const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@familia.com';
+export const VAPID_PUBLIC_KEY =
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+  'BABq7lffGaYOgAzhdMo_ejmgbRX2frBfpeK-isTyU-CvqsoU55Rc5zX9uLPiDUxr_0Ycds8-8mM6Y7F13h_IUh8';
 
-webpush.setVapidDetails(
-  VAPID_SUBJECT,
-  VAPID_PUBLIC_KEY,
-  VAPID_PRIVATE_KEY
-);
+export const VAPID_PRIVATE_KEY =
+  process.env.VAPID_PRIVATE_KEY ||
+  'jM5dX6El9pGGMexgY01HJ7FIRMeTmukPdzcRPR3Vifk';
+
+export const VAPID_SUBJECT =
+  process.env.VAPID_SUBJECT || 'mailto:g.rabbi.dev@gmail.com';
+
+try {
+  if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  }
+} catch (e) {
+  console.warn('VAPID setup deferred or invalid credentials:', e);
+}
 
 export default webpush;

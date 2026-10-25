@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -9,6 +11,7 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  signInWithGoogle: () => Promise<User | null>;
   refreshUser: () => Promise<void>;
 }
 
@@ -26,7 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('familia_user');
       if (stored) {
-        try { return JSON.parse(stored); } catch {}
+        try {
+          return JSON.parse(stored);
+        } catch {}
       }
     }
     return null;
@@ -45,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${storedToken}` },
+        headers: { Authorization: `Bearer ${storedToken}` },
       });
 
       if (response.ok) {
@@ -86,8 +91,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('familia_user');
   };
 
+  const signInWithGoogle = async (): Promise<User | null> => {
+    try {
+      setLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const fbUser = result.user;
+
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: fbUser.email,
+          name: fbUser.displayName,
+          photoURL: fbUser.photoURL,
+          uid: fbUser.uid,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Google sign in failed');
+      }
+
+      login(data.token, data.user);
+      return data.user;
+    } catch (err: any) {
+      console.error('Google Sign In Error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        logout,
+        signInWithGoogle,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

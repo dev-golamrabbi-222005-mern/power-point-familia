@@ -15,6 +15,11 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Familia Meals',
   },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icons/icon-192x192.png',
+  },
 };
 
 export default function RootLayout({

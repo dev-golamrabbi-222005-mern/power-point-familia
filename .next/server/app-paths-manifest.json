@@ -1,11 +1,7 @@
 {
-  "/(public)/(auth)/login/page": "app/(public)/(auth)/login/page.js",
-  "/(public)/about/page": "app/(public)/about/page.js",
+  "/(public)/(auth)/register/page": "app/(public)/(auth)/register/page.js",
   "/(public)/page": "app/(public)/page.js",
-  "/dashboard/(admin)/permission/page": "app/dashboard/(admin)/permission/page.js",
-  "/dashboard/(admin)/users/page": "app/dashboard/(admin)/users/page.js",
-  "/dashboard/(manager)/finances/page": "app/dashboard/(manager)/finances/page.js",
-  "/dashboard/(manager)/meals-bazaar/page": "app/dashboard/(manager)/meals-bazaar/page.js",
-  "/dashboard/(manager)/tickets/page": "app/dashboard/(manager)/tickets/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/api/menu/route": "app/api/menu/route.js",
+  "/api/public/calendar/route": "app/api/public/calendar/route.js",
+  "/api/settings/route": "app/api/settings/route.js"
 }

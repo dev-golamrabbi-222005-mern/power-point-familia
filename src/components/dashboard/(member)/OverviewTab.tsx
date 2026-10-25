@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Utensils, Zap, TrendingUp } from 'lucide-react';
+import { Utensils, Zap, TrendingUp, ShoppingBag } from 'lucide-react';
+import { useDashboard } from '@/src/context/DashboardContext';
 import {
   LineChart,
   Line,
@@ -22,6 +23,7 @@ interface OverviewTabProps {
 }
 
 export default function OverviewTab({ token, onError }: OverviewTabProps) {
+  const { todayBazaarAssignment, setIsLiveBazaarOpen } = useDashboard();
   const [overview, setOverview] = useState<MemberOverviewData | null>(null);
   const [chartData, setChartData] = useState<{
     weekly: MealCostData[];
@@ -154,11 +156,47 @@ export default function OverviewTab({ token, onError }: OverviewTabProps) {
             <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-red-600 dark:text-red-400" />
           </div>
           <p className="text-2xl md:text-3xl font-bold text-red-900 dark:text-red-100">
-            ৳{overview?.liveMealRate || 0}
+            ৳{overview?.liveMealRate ? overview.liveMealRate.toFixed(2) : '0.00'}
           </p>
-          <p className="text-xs text-red-600 dark:text-red-400 mt-1">per meal</p>
+          <p className="text-[11px] text-red-600 dark:text-red-400 mt-1 leading-tight">
+            {overview?.liveMealRate && overview.liveMealRate > 0
+              ? 'per meal (Calculated live)'
+              : `No meals logged yet (Est. Base: ৳${overview?.baseRate || 45})`}
+          </p>
         </div>
       </div>
+
+      {/* === UNLOCKED LIVE BAZAAR DUTY HERO CARD === */}
+      {todayBazaarAssignment && (
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-amber-500/10 border-2 border-emerald-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl shadow-md">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-white">
+                  You have Live Bazaar Duty Today! (আজ আপনার বাজারের দায়িত্ব)
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-500 text-white rounded-full uppercase tracking-wider animate-pulse">
+                  Active
+                </span>
+              </div>
+              <p className="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5">
+                Handover Cash from Manager: <strong className="text-amber-500 font-mono">৳{todayBazaarAssignment.allocatedCash ?? todayBazaarAssignment.budget ?? 0}</strong>
+                {todayBazaarAssignment.member2Name && ` | Partner: ${todayBazaarAssignment.member2Name}`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsLiveBazaarOpen(true)}
+            className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 whitespace-nowrap"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            <span>Open Live Market Mode</span>
+          </button>
+        </div>
+      )}
 
       {/* === CHARTS === */}
       {chartData && (
