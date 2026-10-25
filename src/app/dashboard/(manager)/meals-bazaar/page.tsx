@@ -2,16 +2,23 @@
 
 import React from 'react';
 import { useAuth } from '@/src/context/AuthContext';
+import { useDashboard } from '@/src/context/DashboardContext';
 import ManagerMealsTab from '@/src/components/dashboard/(manager)/ManagerMealsTab';
 
 export default function ManagerMealsBazaarPage() {
   const { token } = useAuth();
+  const { menus, refreshSystemData } = useDashboard();
+
   if (!token) return null;
 
   return (
     <div>
       <h2 className="section-title mb-6">Meals Menu & Bazaar Verification</h2>
-      <ManagerMealsTab token={token} menus={[]} onRefreshMenus={() => {}} />
+      <ManagerMealsTab
+        token={token}
+        menus={menus}
+        onRefreshMenus={refreshSystemData}
+      />
     </div>
   );
 }

@@ -1,0 +1,348 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useDashboard } from '@/src/context/DashboardContext';
+import {
+  TrendingUp,
+  Utensils,
+  Wallet,
+  Calendar,
+  History,
+  ChefHat,
+  ShoppingBag,
+  DollarSign,
+  ClipboardList,
+  UserCheck,
+  Users,
+  SlidersHorizontal,
+  Plus,
+  Power,
+  Layers,
+} from 'lucide-react';
+
+export default function MobileDock() {
+  const pathname = usePathname();
+  const {
+    user,
+    activeRoleView,
+    toggleRoleView,
+    pendingDepositsCount,
+    pendingUsersCount,
+    setIsQuickMealOpen,
+    setIsQuickExpenseOpen,
+    setIsQuickApproveOpen,
+  } = useDashboard();
+
+  if (!user) return null;
+
+  // 1. MEMBER DOCK
+  if (user.role === 'member' || (user.role === 'manager' && activeRoleView === 'member')) {
+    const leftItems = [
+      { href: '/dashboard', label: 'Home', icon: TrendingUp },
+      { href: '/dashboard/meals', label: 'Meals', icon: Utensils },
+    ];
+    const rightItems = [
+      { href: '/dashboard/finance', label: 'Finance', icon: Wallet },
+      { href: '/dashboard/calendar', label: 'Calendar', icon: Calendar },
+      { href: '/dashboard/history', label: 'History', icon: History },
+    ];
+
+    return (
+      <div className="md:hidden fixed bottom-3 left-3 right-3 z-50 max-w-md mx-auto pointer-events-auto">
+        <nav className="backdrop-blur-xl bg-zinc-950/90 border border-zinc-800/85 rounded-3xl px-2 py-2 shadow-2xl shadow-black/80 flex items-center justify-around relative">
+          {/* Left items */}
+          {leftItems.map(item => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+                  isActive
+                    ? 'text-emerald-400 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <div
+                  className={`p-1.5 rounded-xl transition-all ${
+                    isActive ? 'bg-emerald-500/15 text-emerald-400 shadow-sm' : ''
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+                  {item.label}
+                </span>
+                {isActive && (
+                  <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                )}
+              </Link>
+            );
+          })}
+
+          {/* Central Floating Action Button: Quick Meal Toggle */}
+          <div className="flex flex-col items-center justify-center px-1">
+            <button
+              onClick={() => setIsQuickMealOpen(true)}
+              title="Quick Meal Toggle (Today/Tomorrow)"
+              className="w-12 h-12 -mt-5 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-zinc-950 font-black shadow-lg shadow-emerald-500/30 flex items-center justify-center border-2 border-zinc-950 active:scale-95 transition-transform cursor-pointer group"
+            >
+              <Power className="w-6 h-6 stroke-[2.5] text-zinc-950 group-hover:rotate-12 transition-transform" />
+            </button>
+            <span className="text-[9px] text-emerald-400 font-bold mt-1 tracking-tight">
+              Meal On/Off
+            </span>
+          </div>
+
+          {/* Right items */}
+          {rightItems.map(item => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+                  isActive
+                    ? 'text-emerald-400 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <div
+                  className={`p-1.5 rounded-xl transition-all ${
+                    isActive ? 'bg-emerald-500/15 text-emerald-400 shadow-sm' : ''
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+                  {item.label}
+                </span>
+                {isActive && (
+                  <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  }
+
+  // 2. MANAGER DOCK (in Manager view)
+  if (user.role === 'manager' && activeRoleView === 'manager') {
+    return (
+      <div className="md:hidden fixed bottom-3 left-3 right-3 z-50 max-w-md mx-auto pointer-events-auto">
+        <nav className="backdrop-blur-xl bg-zinc-950/90 border border-zinc-800/85 rounded-3xl px-2 py-2 shadow-2xl shadow-black/80 flex items-center justify-around relative">
+          {/* Overview */}
+          <Link
+            href="/dashboard"
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+              pathname === '/dashboard' ? 'text-teal-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <div
+              className={`p-1.5 rounded-xl transition-all ${
+                pathname === '/dashboard' ? 'bg-teal-500/15 text-teal-400 shadow-sm' : ''
+              }`}
+            >
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium">Overview</span>
+            {pathname === '/dashboard' && (
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(45,212,191,0.8)]" />
+            )}
+          </Link>
+
+          {/* Meals & Bazaar */}
+          <Link
+            href="/dashboard/meals-bazaar"
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+              pathname === '/dashboard/meals-bazaar' ? 'text-teal-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <div
+              className={`p-1.5 rounded-xl transition-all ${
+                pathname === '/dashboard/meals-bazaar' ? 'bg-teal-500/15 text-teal-400 shadow-sm' : ''
+              }`}
+            >
+              <ChefHat className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium">Meals/Bazaar</span>
+            {pathname === '/dashboard/meals-bazaar' && (
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(45,212,191,0.8)]" />
+            )}
+          </Link>
+
+          {/* Central Floating Action Button: Add Expense / Bazaar Entry */}
+          <div className="flex flex-col items-center justify-center px-1">
+            <button
+              onClick={() => setIsQuickExpenseOpen(true)}
+              title="Add Bazaar / Expense Entry"
+              className="w-12 h-12 -mt-5 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 text-zinc-950 font-black shadow-lg shadow-teal-500/30 flex items-center justify-center border-2 border-zinc-950 active:scale-95 transition-transform cursor-pointer group"
+            >
+              <Plus className="w-6 h-6 stroke-[3] text-zinc-950 group-hover:scale-110 transition-transform" />
+            </button>
+            <span className="text-[9px] text-teal-400 font-bold mt-1 tracking-tight">
+              Add Expense
+            </span>
+          </div>
+
+          {/* Finances */}
+          <Link
+            href="/dashboard/finances"
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+              pathname === '/dashboard/finances' ? 'text-teal-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <div
+              className={`p-1.5 rounded-xl transition-all ${
+                pathname === '/dashboard/finances' ? 'bg-teal-500/15 text-teal-400 shadow-sm' : ''
+              }`}
+            >
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium">Finances</span>
+            {pathname === '/dashboard/finances' && (
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(45,212,191,0.8)]" />
+            )}
+          </Link>
+
+          {/* Tickets (with badge) */}
+          <Link
+            href="/dashboard/tickets"
+            className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+              pathname === '/dashboard/tickets' ? 'text-teal-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <div
+              className={`p-1.5 rounded-xl transition-all relative ${
+                pathname === '/dashboard/tickets' ? 'bg-teal-500/15 text-teal-400 shadow-sm' : ''
+              }`}
+            >
+              <ClipboardList className="w-5 h-5" />
+              {pendingDepositsCount > 0 && (
+                <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-teal-400 text-zinc-950 text-[8px] font-black rounded-full flex items-center justify-center">
+                  {pendingDepositsCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium">Tickets</span>
+            {pathname === '/dashboard/tickets' && (
+              <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-teal-400 rounded-full shadow-[0_0_8px_rgba(45,212,191,0.8)]" />
+            )}
+          </Link>
+        </nav>
+      </div>
+    );
+  }
+
+  // 3. ADMIN DOCK
+  return (
+    <div className="md:hidden fixed bottom-3 left-3 right-3 z-50 max-w-md mx-auto pointer-events-auto">
+      <nav className="backdrop-blur-xl bg-zinc-950/90 border border-zinc-800/85 rounded-3xl px-2 py-2 shadow-2xl shadow-black/80 flex items-center justify-around relative">
+        {/* Overview */}
+        <Link
+          href="/dashboard"
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+            pathname === '/dashboard' ? 'text-purple-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div
+            className={`p-1.5 rounded-xl transition-all ${
+              pathname === '/dashboard' ? 'bg-purple-500/15 text-purple-400 shadow-sm' : ''
+            }`}
+          >
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] mt-0.5 tracking-tight font-medium">Overview</span>
+          {pathname === '/dashboard' && (
+            <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+          )}
+        </Link>
+
+        {/* Users */}
+        <Link
+          href="/dashboard/users"
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+            pathname === '/dashboard/users' ? 'text-purple-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div
+            className={`p-1.5 rounded-xl transition-all ${
+              pathname === '/dashboard/users' ? 'bg-purple-500/15 text-purple-400 shadow-sm' : ''
+            }`}
+          >
+            <Users className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] mt-0.5 tracking-tight font-medium">Users</span>
+          {pathname === '/dashboard/users' && (
+            <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+          )}
+        </Link>
+
+        {/* Central Floating Action Button: Quick Approve Pending Users */}
+        <div className="flex flex-col items-center justify-center px-1">
+          <button
+            onClick={() => setIsQuickApproveOpen(true)}
+            title="Approve Pending Users"
+            className="w-12 h-12 -mt-5 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-white font-black shadow-lg shadow-purple-500/30 flex items-center justify-center border-2 border-zinc-950 active:scale-95 transition-transform cursor-pointer relative group"
+          >
+            <UserCheck className="w-6 h-6 stroke-[2.5] text-white group-hover:scale-110 transition-transform" />
+            {pendingUsersCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 text-zinc-950 font-black text-[9px] rounded-full flex items-center justify-center border border-zinc-950">
+                {pendingUsersCount}
+              </span>
+            )}
+          </button>
+          <span className="text-[9px] text-purple-400 font-bold mt-1 tracking-tight">
+            Approve
+          </span>
+        </div>
+
+        {/* Permissions */}
+        <Link
+          href="/dashboard/permission"
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+            pathname === '/dashboard/permission' ? 'text-purple-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div
+            className={`p-1.5 rounded-xl transition-all ${
+              pathname === '/dashboard/permission' ? 'bg-purple-500/15 text-purple-400 shadow-sm' : ''
+            }`}
+          >
+            <SlidersHorizontal className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] mt-0.5 tracking-tight font-medium">Perms</span>
+          {pathname === '/dashboard/permission' && (
+            <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+          )}
+        </Link>
+
+        {/* Manager View */}
+        <Link
+          href="/dashboard/managerView"
+          className={`flex-1 flex flex-col items-center justify-center py-1 transition-all rounded-2xl relative ${
+            pathname === '/dashboard/managerView' ? 'text-purple-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div
+            className={`p-1.5 rounded-xl transition-all ${
+              pathname === '/dashboard/managerView' ? 'bg-purple-500/15 text-purple-400 shadow-sm' : ''
+            }`}
+          >
+            <ChefHat className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] mt-0.5 tracking-tight font-medium">Manager</span>
+          {pathname === '/dashboard/managerView' && (
+            <span className="absolute -bottom-0.5 w-1.5 h-1.5 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+          )}
+        </Link>
+      </nav>
+    </div>
+  );
+}

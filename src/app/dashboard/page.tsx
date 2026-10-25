@@ -1,61 +1,40 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
-import DashboardLayout from '@/src/components/DashboardLayout';
+import { useDashboard } from '@/src/context/DashboardContext';
 import MemberDashboard from '@/src/components/MemberDashboard';
 import ManagerDashboard from '@/src/components/ManagerDashboard';
 import AdminDashboard from '@/src/components/AdminDashboard';
 import GuestDashboard from '@/src/components/GuestDashboard';
-import { MealMenu, DashboardStats } from '@/src/types';
 import { ShieldCheck, UserCheck, RefreshCw } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, token, loading, logout } = useAuth();
+  const { user, token, loading } = useAuth();
+  const {
+    activeRoleView,
+    setActiveRoleView,
+    menus,
+    mealRate,
+    refreshSystemData,
+    loadingSystem,
+  } = useDashboard();
   const router = useRouter();
 
-  const [menus, setMenus] = useState<MealMenu[]>([]);
-  const [mealRate, setMealRate] = useState<number>(45);
-  const [dataLoading, setDataLoading] = useState(true);
-
-  // Role View Mode for Manager/Admin toggle: allows Manager to switch between [Manager View] and [My Member View]
-  const [activeRoleView, setActiveRoleView] = useState<'manager' | 'member'>('manager');
-
-  const fetchSystemData = async () => {
-    if (!token) return;
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const menuRes = await fetch('/api/menu', { headers });
-      if (menuRes.ok) setMenus(await menuRes.json());
-
-      const settingsRes = await fetch('/api/settings', { headers });
-      if (settingsRes.ok) {
-        const sData = await settingsRes.json();
-        setMealRate(sData.mealRate || 45);
-      }
-    } catch (e) {
-      console.error('Error fetching system data', e);
-    } finally {
-      setDataLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (!loading) {
-      if (!user || !token) {
-        router.push('/login');
-      } else {
-        fetchSystemData();
-      }
+    if (!loading && (!user || !token)) {
+      router.push('/login');
     }
-  }, [user, token, loading]);
+  }, [user, token, loading, router]);
 
-  if (loading || dataLoading) {
+  if (loading || (token && loadingSystem && menus.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
-        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Loading Dashboard...</p>
+        <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+          Loading Dashboard Workspace...
+        </p>
       </div>
     );
   }
@@ -67,8 +46,13 @@ export default function DashboardPage() {
           <ShieldCheck className="w-8 h-8" />
         </div>
         <h2 className="text-lg font-bold text-zinc-200">Authentication Required</h2>
-        <p className="text-xs text-zinc-400">Please sign in to access your Power Point Familia dashboard.</p>
-        <button onClick={() => router.push('/login')} className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black text-xs rounded-xl shadow-md cursor-pointer">
+        <p className="text-xs text-zinc-400">
+          Please sign in to access your Power Point Familia dashboard.
+        </p>
+        <button
+          onClick={() => router.push('/login')}
+          className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black text-xs rounded-xl shadow-md cursor-pointer"
+        >
           Go to Sign In
         </button>
       </div>
@@ -78,39 +62,37 @@ export default function DashboardPage() {
   // 1. Pending Guests Notice
   if (user.status === 'pending') {
     return (
-      <DashboardLayout user={user} token={token} onLogout={logout}>
-        <GuestDashboard user={user} token={token} onRefreshUser={() => {}} />
-      </DashboardLayout>
+      <GuestDashboard user={user} token={token} onRefreshUser={() => {}} />
     );
   }
 
   // 2. Admin Role Dashboard
   if (user.role === 'admin') {
     return (
-      <DashboardLayout user={user} token={token} onLogout={logout}>
-        <AdminDashboard
-          user={user}
-          token={token}
-          mealRate={mealRate}
-          onRefreshSettings={fetchSystemData}
-        />
-      </DashboardLayout>
+      <AdminDashboard
+        user={user}
+        token={token}
+        mealRate={mealRate}
+        onRefreshSettings={refreshSystemData}
+      />
     );
   }
 
-  // 3. Manager Role Dashboard (with dual-role toggle between Manager Mode & Personal Member Mode)
+  // 3. Manager Role Dashboard (with dual-role view toggle)
   if (user.role === 'manager') {
     return (
-      <DashboardLayout user={user} token={token} onLogout={logout}>
-        {/* Dual Role Mode Toggle Switch */}
-        <div className="flex items-center justify-between bg-zinc-900/90 border border-zinc-800 rounded-2xl p-3 mb-6 shadow-sm flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <span className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+      <div className="space-y-6">
+        {/* Manager Mode Switch Banner */}
+        <div className="flex items-center justify-between bg-zinc-900/90 border border-zinc-800 rounded-2xl p-3 shadow-xs flex-wrap gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 bg-teal-500/10 text-teal-400 rounded-xl">
               <ShieldCheck className="w-4 h-4" />
             </span>
             <div>
-              <p className="text-xs font-bold text-zinc-200">Manager Mode Switch</p>
-              <p className="text-[10px] text-zinc-400">Toggle between Manager controls and personal meal bookings</p>
+              <p className="text-xs font-bold text-zinc-200">Workspace View Mode</p>
+              <p className="text-[10px] text-zinc-400">
+                Toggle between Manager controls and personal meal bookings
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
@@ -118,12 +100,12 @@ export default function DashboardPage() {
               onClick={() => setActiveRoleView('manager')}
               className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeRoleView === 'manager'
-                  ? 'bg-emerald-500 text-zinc-950 shadow-md font-black'
+                  ? 'bg-teal-500 text-zinc-950 shadow-md font-black'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              Manager Mode
+              Manager Controls
             </button>
             <button
               onClick={() => setActiveRoleView('member')}
@@ -134,7 +116,7 @@ export default function DashboardPage() {
               }`}
             >
               <UserCheck className="w-3.5 h-3.5" />
-              My Personal Member Mode
+              My Personal Meals
             </button>
           </div>
         </div>
@@ -145,7 +127,7 @@ export default function DashboardPage() {
             token={token}
             menus={menus}
             mealRate={mealRate}
-            onRefreshMenus={fetchSystemData}
+            onRefreshMenus={refreshSystemData}
           />
         ) : (
           <MemberDashboard
@@ -153,23 +135,21 @@ export default function DashboardPage() {
             token={token}
             menus={menus}
             mealRate={mealRate}
-            onRefreshStats={fetchSystemData}
+            onRefreshStats={refreshSystemData}
           />
         )}
-      </DashboardLayout>
+      </div>
     );
   }
 
   // 4. Standard Approved Member Dashboard
   return (
-    <DashboardLayout user={user} token={token} onLogout={logout}>
-      <MemberDashboard
-        user={user}
-        token={token}
-        menus={menus}
-        mealRate={mealRate}
-        onRefreshStats={fetchSystemData}
-      />
-    </DashboardLayout>
+    <MemberDashboard
+      user={user}
+      token={token}
+      menus={menus}
+      mealRate={mealRate}
+      onRefreshStats={refreshSystemData}
+    />
   );
 }
