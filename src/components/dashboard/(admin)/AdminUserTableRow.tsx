@@ -29,15 +29,30 @@ export function AdminUserTableRow({
   return (
     <tr className="hover:bg-zinc-900/40 transition-colors">
       <td className="py-3 px-4">
-        <p className="font-bold text-zinc-100 flex items-center gap-2">
-          {usr.name}
-          {isSelf && (
-            <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md uppercase">
-              Superuser (Me)
-            </span>
+        <div className="flex items-center gap-2.5">
+          {usr.image || usr.photoURL ? (
+            <img
+              src={usr.image || usr.photoURL}
+              alt={usr.name}
+              className="w-8 h-8 rounded-xl object-cover border border-zinc-700/80 shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-xl bg-zinc-800 text-zinc-300 font-bold text-xs flex items-center justify-center shrink-0">
+              {usr.name.charAt(0).toUpperCase()}
+            </div>
           )}
-        </p>
-        <p className="text-[11px] text-zinc-500 font-mono">{usr.email}</p>
+          <div>
+            <p className="font-bold text-zinc-100 flex items-center gap-2">
+              {usr.name}
+              {isSelf && (
+                <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md uppercase">
+                  Superuser (Me)
+                </span>
+              )}
+            </p>
+            <p className="text-[11px] text-zinc-500 font-mono">{usr.email}</p>
+          </div>
+        </div>
       </td>
 
       <td className="py-3 px-3 text-xs text-zinc-400 font-mono">

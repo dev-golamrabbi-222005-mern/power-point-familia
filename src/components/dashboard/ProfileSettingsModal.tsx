@@ -61,15 +61,26 @@ export default function ProfileSettingsModal() {
       <div className="relative w-full max-w-lg bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl">
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800/80">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20">
-              <UserIcon className="w-5 h-5" />
-            </div>
+            {user.image || user.photoURL ? (
+              <img
+                src={user.image || user.photoURL}
+                alt={user.name}
+                className="w-12 h-12 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-md shrink-0"
+              />
+            ) : (
+              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 shrink-0">
+                <UserIcon className="w-6 h-6" />
+              </div>
+            )}
             <div>
-              <h3 className="font-display font-bold text-base text-zinc-100">
-                Account Settings
+              <h3 className="font-display font-bold text-base text-zinc-100 flex items-center gap-2">
+                {user.name}
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  {user.role}
+                </span>
               </h3>
-              <p className="text-xs text-zinc-400">
-                Update your profile info and credentials
+              <p className="text-xs text-zinc-400 font-mono">
+                {user.email}
               </p>
             </div>
           </div>

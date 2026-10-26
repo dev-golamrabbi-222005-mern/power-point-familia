@@ -36,7 +36,9 @@ export async function PUT(req: NextRequest) {
         phone: db.users[userIndex].phone,
         role: db.users[userIndex].role,
         status: db.users[userIndex].status,
-        createdAt: db.users[userIndex].createdAt
+        createdAt: db.users[userIndex].createdAt,
+        image: db.users[userIndex].image || db.users[userIndex].photoURL || '',
+        photoURL: db.users[userIndex].photoURL || db.users[userIndex].image || '',
       },
       message: 'Profile updated successfully.'
     });

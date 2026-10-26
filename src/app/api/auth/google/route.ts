@@ -8,7 +8,7 @@ const DEFAULT_ADMIN = (process.env.DEFAULT_ADMIN_EMAIL || 'g.rabbi.dev@gmail.com
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, uid, photoURL } = await req.json();
+    const { email, name, uid, photoURL, image } = await req.json();
 
     if (!email) {
       return NextResponse.json({ message: 'Email is required from Google Auth.' }, { status: 400 });
@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = email.toLowerCase().trim();
     const isAdmin = cleanEmail === DEFAULT_ADMIN;
+    const profilePic = image || photoURL || '';
 
     await ensureDbInit();
     const db = getDb();
@@ -34,7 +35,8 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
         bazaarCount: 0,
         passwordHash: '',
-        photoURL: photoURL || '',
+        image: profilePic,
+        photoURL: profilePic,
       };
 
       db.users.push(newUser);
@@ -48,8 +50,13 @@ export async function POST(req: NextRequest) {
         user.status = 'approved';
         modified = true;
       }
-      if (name && (!user.name || user.name.includes('@'))) {
+      if (name && (!user.name || user.name.includes('@') || user.name !== name)) {
         user.name = name;
+        modified = true;
+      }
+      if (profilePic && (user.image !== profilePic || user.photoURL !== profilePic)) {
+        user.image = profilePic;
+        user.photoURL = profilePic;
         modified = true;
       }
       if (modified) {
@@ -63,6 +70,8 @@ export async function POST(req: NextRequest) {
       role: user.role,
       name: user.name,
       status: user.status,
+      image: user.image || user.photoURL || '',
+      photoURL: user.photoURL || user.image || '',
     };
 
     const token = jwt.sign(tokenUser, JWT_SECRET, { expiresIn: '7d' });

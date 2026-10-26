@@ -1,6 +1,7 @@
 import '@/src/global.css';
 import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/src/context/AuthContext';
+import NextAuthProvider from '@/src/components/providers/NextAuthProvider';
 
 export const viewport: Viewport = {
   themeColor: '#0a0a0a',
@@ -30,9 +31,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="bg-[#0a0a0a] text-zinc-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <NextAuthProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );

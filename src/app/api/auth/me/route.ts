@@ -23,7 +23,9 @@ export async function GET(req: NextRequest) {
         phone: fullUser.phone,
         role: fullUser.role,
         status: fullUser.status,
-        createdAt: fullUser.createdAt
+        createdAt: fullUser.createdAt,
+        image: fullUser.image || fullUser.photoURL || '',
+        photoURL: fullUser.photoURL || fullUser.image || '',
       }
     });
   } catch (error) {

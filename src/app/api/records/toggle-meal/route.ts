@@ -7,8 +7,8 @@ export async function POST(req: NextRequest) {
     const { error, user } = authenticate(req);
     if (error) return error;
 
-    if (user!.role !== 'member') {
-      return NextResponse.json({ message: 'Only members can toggle meals.' }, { status: 403 });
+    if (!['member', 'manager', 'admin'].includes(user!.role)) {
+      return NextResponse.json({ message: 'Only active members, managers, or admins can toggle meals.' }, { status: 403 });
     }
 
     const { date, mealType, action } = await req.json(); // action: 'on' | 'off'

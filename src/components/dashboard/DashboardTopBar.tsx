@@ -256,9 +256,17 @@ export default function DashboardTopBar() {
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
               className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl transition-all cursor-pointer"
             >
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-black text-xs flex items-center justify-center shrink-0">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
+              {user.image || user.photoURL ? (
+                <img
+                  src={user.image || user.photoURL}
+                  alt={user.name}
+                  className="w-7 h-7 rounded-lg object-cover border border-emerald-500/30 shrink-0"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-black text-xs flex items-center justify-center shrink-0">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="hidden sm:block text-left max-w-[100px] truncate">
                 <p className="text-xs font-bold text-zinc-200 truncate leading-tight">
                   {user.name}
@@ -272,10 +280,23 @@ export default function DashboardTopBar() {
 
             {/* Profile Menu Dropdown */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-4 py-2.5 border-b border-zinc-800/80">
-                  <p className="text-xs font-bold text-zinc-200 truncate">{user.name}</p>
-                  <p className="text-[10px] text-zinc-400 truncate">{user.email}</p>
+              <div className="absolute right-0 mt-2 w-56 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-4 py-3 border-b border-zinc-800/80 flex items-center gap-3">
+                  {user.image || user.photoURL ? (
+                    <img
+                      src={user.image || user.photoURL}
+                      alt={user.name}
+                      className="w-9 h-9 rounded-xl object-cover border border-emerald-500/40 shrink-0 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 font-black text-sm flex items-center justify-center shrink-0">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-zinc-100 truncate">{user.name}</p>
+                    <p className="text-[10px] text-zinc-400 truncate font-mono">{user.email}</p>
+                  </div>
                 </div>
 
                 <div className="py-1">

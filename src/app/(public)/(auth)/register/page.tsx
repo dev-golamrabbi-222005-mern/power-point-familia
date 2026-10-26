@@ -23,13 +23,9 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      const signedInUser = await signInWithGoogle();
-      if (signedInUser) {
-        router.push('/dashboard');
-      }
+      await signInWithGoogle();
     } catch (err: any) {
       setError(err.message || 'Google registration failed.');
-    } finally {
       setLoading(false);
     }
   };

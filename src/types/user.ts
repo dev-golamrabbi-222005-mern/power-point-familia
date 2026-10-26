@@ -20,6 +20,8 @@ export interface User {
     servant?: number;
     customFixedTotal?: number;
   };
+  image?: string;
+  photoURL?: string;
   pushSubscriptions?: any[]; // Array of Web Push Notification subscriptions
 }
 

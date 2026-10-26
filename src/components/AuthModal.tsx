@@ -21,14 +21,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialTab = 'lo
     setError('');
     setLoading(true);
     try {
-      const user = await signInWithGoogle();
-      if (user) {
-        onSuccess(user, localStorage.getItem('familia_token') || '');
-        onClose();
-      }
+      await signInWithGoogle();
+      onClose();
     } catch (err: any) {
       setError(err.message || 'Google sign-in failed');
-    } finally {
       setLoading(false);
     }
   };

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { signIn as nextAuthSignIn, signOut as nextAuthSignOut, useSession } from 'next-auth/react';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -11,13 +10,15 @@ interface AuthContextType {
   loading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
-  signInWithGoogle: () => Promise<User | null>;
+  signInWithGoogle: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession();
+
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('familia_token');
@@ -39,11 +40,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [loading, setLoading] = useState(true);
 
+  // Sync NextAuth session with local JWT auth state
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      const u = session.user as any;
+      const jwtToken = (session as any).jwtToken;
+
+      const syncedUser: User = {
+        id: u.id || u.sub || `user_${Date.now()}`,
+        email: u.email || '',
+        name: u.name || '',
+        phone: u.phone || '',
+        role: u.role || 'member',
+        status: u.status || 'approved',
+        createdAt: u.createdAt || new Date().toISOString(),
+        bazaarCount: u.bazaarCount || 0,
+        image: u.image || u.photoURL || '',
+        photoURL: u.photoURL || u.image || '',
+      };
+
+      if (jwtToken) {
+        login(jwtToken, syncedUser);
+      } else {
+        setUser(syncedUser);
+        localStorage.setItem('familia_user', JSON.stringify(syncedUser));
+      }
+    }
+  }, [session, status]);
+
   const refreshUser = async () => {
     const storedToken = localStorage.getItem('familia_token');
     if (!storedToken) {
-      setUser(null);
-      setToken(null);
+      if (status !== 'authenticated') {
+        setUser(null);
+        setToken(null);
+      }
       setLoading(false);
       return;
     }
@@ -80,46 +111,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (newToken: string, newUser: User) => {
     setToken(newToken);
     setUser(newUser);
-    localStorage.setItem('familia_token', newToken);
-    localStorage.setItem('familia_user', JSON.stringify(newUser));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('familia_token', newToken);
+      localStorage.setItem('familia_user', JSON.stringify(newUser));
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('familia_token');
-    localStorage.removeItem('familia_user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('familia_token');
+      localStorage.removeItem('familia_user');
+    }
+    try {
+      await nextAuthSignOut({ redirect: false });
+    } catch (e) {
+      // ignore
+    }
   };
 
-  const signInWithGoogle = async (): Promise<User | null> => {
+  const signInWithGoogle = async (): Promise<void> => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const result = await signInWithPopup(auth, googleProvider);
-      const fbUser = result.user;
-
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: fbUser.email,
-          name: fbUser.displayName,
-          photoURL: fbUser.photoURL,
-          uid: fbUser.uid,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Google sign in failed');
-      }
-
-      login(data.token, data.user);
-      return data.user;
+      await nextAuthSignIn('google', { callbackUrl: '/dashboard' });
     } catch (err: any) {
-      console.error('Google Sign In Error:', err);
-      throw err;
-    } finally {
+      console.error('NextAuth Google Sign In Error:', err);
       setLoading(false);
+      throw err;
     }
   };
 
@@ -128,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         token,
-        loading,
+        loading: loading || status === 'loading',
         login,
         logout,
         signInWithGoogle,
