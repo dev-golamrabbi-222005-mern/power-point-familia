@@ -45,14 +45,16 @@ export async function PUT(
 
       // Check if it's a fixed utility ticket
       const remarks = targetDeposit.remarks || '';
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      const currentMonth = (targetDeposit as any).month || new Date().toISOString().slice(0, 7);
 
-      let utilityType: FixedUtilityType | null = null;
-      if (remarks.includes('Rent') || remarks.includes('Basha Vara')) utilityType = 'rent';
-      else if (remarks.includes('Electricity') || remarks.includes('Current Bill')) utilityType = 'electricity';
-      else if (remarks.includes('WiFi')) utilityType = 'wifi';
-      else if (remarks.includes('Gas')) utilityType = 'gas';
-      else if (remarks.includes('Servant')) utilityType = 'servant_fee';
+      let utilityType: FixedUtilityType | null = (targetDeposit as any).utilityType || null;
+      if (!utilityType) {
+        if (remarks.includes('Rent') || remarks.includes('Basha Vara')) utilityType = 'rent';
+        else if (remarks.includes('Electricity') || remarks.includes('Current Bill')) utilityType = 'electricity';
+        else if (remarks.includes('WiFi')) utilityType = 'wifi';
+        else if (remarks.includes('Gas')) utilityType = 'gas';
+        else if (remarks.includes('Servant')) utilityType = 'servant_fee';
+      }
 
       if (utilityType) {
         // Record payment in memberBillPayments
@@ -60,7 +62,10 @@ export async function PUT(
           p => p.userId === targetDeposit.userId && p.month === currentMonth && p.type === utilityType
         );
 
-        if (!existingPayment) {
+        if (existingPayment) {
+          existingPayment.amount = (existingPayment.amount || 0) + targetDeposit.amount;
+          existingPayment.depositId = targetDeposit.id;
+        } else {
           const newPayment: MemberBillPayment = {
             id: `mbp-${Date.now()}`,
             userId: targetDeposit.userId,
@@ -76,7 +81,7 @@ export async function PUT(
       }
     }
 
-    saveDb(db);
+    await saveDb(db);
 
     return NextResponse.json({
       deposit: db.deposits[depIndex],

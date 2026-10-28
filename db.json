@@ -5,18 +5,8 @@
       "email": "g.rabbi2005.555@gmail.com",
       "name": "Rabbi Developer",
       "phone": "01812345678",
-      "role": "admin",
+      "role": "member",
       "status": "approved",
-      "createdAt": "2026-07-21T12:35:19.562Z",
-      "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
-    },
-    {
-      "id": "user-guest",
-      "email": "guest@familia.com",
-      "name": "Sajal Guest",
-      "phone": "01612345678",
-      "role": "user",
-      "status": "pending",
       "createdAt": "2026-07-21T12:35:19.562Z",
       "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
     },
@@ -25,7 +15,7 @@
       "email": "admin@familia.com",
       "name": "System Admin",
       "phone": "01712345678",
-      "role": "admin",
+      "role": "member",
       "status": "approved",
       "createdAt": "2026-07-21T12:35:19.562Z",
       "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
@@ -53,37 +43,17 @@
       "passwordHash": "$2b$10$Lh41XWIm9FFQaVgLynLGv.TJU3qERicEhzWLcpYLp6PfPfIB2et7C"
     },
     {
-      "id": "user-1785253982368",
-      "email": "mohibbullah2323@gmail.com",
-      "name": "Mohibbullah",
-      "phone": "01711872691",
-      "role": "member",
+      "id": "101348681467856942733",
+      "email": "g.rabbi.dev@gmail.com",
+      "name": "Md. Golam Rabbi",
+      "phone": "01558984151",
+      "role": "admin",
       "status": "approved",
-      "createdAt": "2026-07-28T15:53:02.368Z",
-      "passwordHash": "$2b$10$L3I8ZPQsSSd9e6KA06XJPe26PxzWlJJuDAkausaOjIGV3KKogpPZ6",
-      "bazaarCount": 0
-    },
-    {
-      "id": "user-1785253831668",
-      "email": "ifatzaman2k4@gmail.com",
-      "name": "Ifat",
-      "phone": "01309223211",
-      "role": "member",
-      "status": "approved",
-      "createdAt": "2026-07-28T15:50:31.668Z",
-      "passwordHash": "$2b$10$yYOCZH1GX3ZPU7vPJ2ykT.w/zTbeOOJHJQGxnqoPiXw136ykFMPaW",
-      "bazaarCount": 0
-    },
-    {
-      "id": "user-1785254225912",
-      "email": "samiuljumman@gmail.com",
-      "name": "Samiul",
-      "phone": "01987452103",
-      "role": "member",
-      "status": "approved",
-      "createdAt": "2026-07-28T15:57:05.912Z",
-      "passwordHash": "$2b$10$sCCxOEJbzO0.FEAMNjA0CO5gb5M8TxPv2ofjeUEgVgtuyMwRvGsWq",
-      "bazaarCount": 0
+      "createdAt": "2026-10-26T16:56:02.386Z",
+      "bazaarCount": 0,
+      "passwordHash": "",
+      "image": "https://lh3.googleusercontent.com/a/ACg8ocJTi0TcCKkmJ8eZqonPyvj-7Sicx63p5I9HkrEGENc62WkNKzc=s96-c",
+      "photoURL": "https://lh3.googleusercontent.com/a/ACg8ocJTi0TcCKkmJ8eZqonPyvj-7Sicx63p5I9HkrEGENc62WkNKzc=s96-c"
     }
   ],
   "menus": [

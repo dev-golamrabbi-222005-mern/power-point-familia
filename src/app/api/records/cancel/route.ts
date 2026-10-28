@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate } from '@/src/lib/auth';
 import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
+import { getDhakaTime } from '@/src/lib/utils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +35,28 @@ export async function POST(req: NextRequest) {
     let finalUserId = user!.id;
     if (targetUserId && (user!.role === 'manager' || user!.role === 'admin')) {
       finalUserId = targetUserId;
+    }
+
+    const { today, currentHour } = getDhakaTime();
+
+    // Check cut-off time for members
+    if (user!.role === 'member') {
+      for (const slot of slots) {
+        if (slot.date === today) {
+          if (slot.mealType === 'lunch' && currentHour >= 9) {
+            return NextResponse.json({
+              message: 'Lunch cut-off time (09:00 AM) has passed. Please submit an emergency meal-off request.',
+              cutoffPassed: true,
+            }, { status: 400 });
+          }
+          if (slot.mealType === 'dinner' && currentHour >= 15) {
+            return NextResponse.json({
+              message: 'Dinner cut-off time (03:00 PM) has passed. Please submit an emergency meal-off request.',
+              cutoffPassed: true,
+            }, { status: 400 });
+          }
+        }
+      }
     }
 
     let cancelledCount = 0;

@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const jwtToken = (session as any).jwtToken;
 
       const syncedUser: User = {
-        id: u.id || u.sub || `user_${Date.now()}`,
+        id: u.id || u.sub || (u.email ? u.email.toLowerCase().trim() : 'user_member'),
         email: u.email || '',
         name: u.name || '',
         phone: u.phone || '',

@@ -58,7 +58,9 @@ export async function GET(req: NextRequest) {
         .filter(r => r.date.startsWith(month))
         .reduce((sum, r) => sum + (r.count || 0), 0);
 
-      const messMealRate = summary?.finalMealRate || (messMeals > 0 ? messBazaar / messMeals : db.settings.mealRate || 45);
+      const messMealRate = summary?.finalMealRate !== undefined 
+        ? summary.finalMealRate 
+        : (messMeals > 0 && messBazaar > 0 ? Math.round((messBazaar / messMeals) * 100) / 100 : 0);
 
       // User Individual Data
       const userPayments = db.memberBillPayments.filter(p => p.userId === userId && p.month === month);

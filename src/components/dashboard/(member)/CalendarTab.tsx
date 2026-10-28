@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ShoppingCart, Utensils, Sun, Users, ShoppingBag, DollarSign, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
 import { CalendarActivityData, BazaarDutyInfo } from '@/src/types';
 import LiveBazaarShopperView from './live-bazaar-shopper-view';
+import { showSuccessAlert, showErrorAlert } from '@/src/lib/alerts';
 
 interface CalendarTabProps {
   token: string;
@@ -63,11 +64,11 @@ export default function CalendarTab({ token, onError }: CalendarTabProps) {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Submission failed');
-      alert(data.message || 'Bajar expense submitted successfully!');
+      showSuccessAlert('Success', data.message || 'Bajar expense submitted successfully!');
       setShowSubmitModal(false);
       fetchBazaarDuty(bazaarDuty.date);
     } catch (err: any) {
-      alert(err.message || 'Error submitting expense');
+      showErrorAlert('Error', err.message || 'Error submitting expense');
     } finally {
       setSubmittingExpense(false);
     }

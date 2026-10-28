@@ -10,16 +10,8 @@ export async function GET(req: NextRequest) {
     await ensureDbInit();
     const db = getDb();
     
-    // Don't expose password hash
-    const sanitizedUsers = db.users.map(u => ({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      phone: u.phone,
-      role: u.role,
-      status: u.status,
-      createdAt: u.createdAt
-    }));
+    // Don't expose password hash, but preserve all user data including fixedCosts and pastMonthDue
+    const sanitizedUsers = db.users.map(({ passwordHash, ...safeUser }) => safeUser);
 
     return NextResponse.json(sanitizedUsers);
   } catch (error) {

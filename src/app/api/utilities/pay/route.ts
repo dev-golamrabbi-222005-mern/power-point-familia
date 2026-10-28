@@ -10,14 +10,17 @@ export async function POST(req: NextRequest) {
 
     const { month, type, amount, depositId } = await req.json();
 
-    if (!month || !type || !amount || Number(amount) <= 0) {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const billMonth = month || currentMonth;
+
+    if (!type || !amount || Number(amount) <= 0) {
       return NextResponse.json(
-        { message: 'month, type, and amount (>0) are required.' },
+        { message: 'Bill type and amount (>0) are required.' },
         { status: 400 }
       );
     }
 
-    if (!['rent', 'electricity', 'wifi', 'servant_fee'].includes(type)) {
+    if (!['rent', 'electricity', 'wifi', 'gas', 'servant_fee'].includes(type)) {
       return NextResponse.json({ message: 'Invalid bill type.' }, { status: 400 });
     }
 
@@ -27,7 +30,7 @@ export async function POST(req: NextRequest) {
     const newPayment: MemberBillPayment = {
       id: `billpay-${Date.now()}`,
       userId: user!.id,
-      month,
+      month: billMonth,
       type,
       amount: Number(amount),
       paidAt: new Date().toISOString(),
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
     };
 
     db.memberBillPayments.push(newPayment);
-    saveDb(db);
+    await saveDb(db);
 
     return NextResponse.json({
       payment: newPayment,

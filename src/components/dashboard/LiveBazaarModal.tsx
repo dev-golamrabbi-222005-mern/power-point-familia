@@ -17,6 +17,7 @@ import {
   Receipt
 } from 'lucide-react';
 import { BazaarAssignment, BazaarItem } from '@/src/types/bazaar';
+import { showWarningAlert } from '@/src/lib/alerts';
 
 interface LiveBazaarModalProps {
   isOpen: boolean;
@@ -133,7 +134,7 @@ export default function LiveBazaarModal({
 
   const handleSubmit = async () => {
     if (items.length === 0) {
-      alert('Please add at least one purchased item.');
+      showWarningAlert('No Items', 'Please add at least one purchased item.');
       return;
     }
 

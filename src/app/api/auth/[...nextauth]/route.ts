@@ -1,11 +1,11 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import jwt from 'jsonwebtoken';
-import { getDb, ensureDbInit, saveDb } from '@/src/lib/db';
+import { getDb, ensureDbInit, saveDb, connectMongo } from '@/src/lib/db';
 import { User } from '@/src/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'power_point_familia_super_secure_jwt_secret_key_2026';
-const DEFAULT_ADMIN = (process.env.DEFAULT_ADMIN_EMAIL || 'g.rabbi.dev@gmail.com').toLowerCase();
+const DEFAULT_ADMIN = (process.env.DEFAULT_ADMIN_EMAIL || 'g.rabbi.dev@gmail.com').toLowerCase().trim();
 
 const authOptions: NextAuthOptions = {
   providers: [
@@ -33,9 +33,25 @@ const authOptions: NextAuthOptions = {
         const profileImage = (user.image || (profile as any)?.picture || '') as string;
         const displayName = user.name || cleanEmail.split('@')[0];
 
-        let dbUser = db.users.find((u) => u.email.toLowerCase() === cleanEmail);
+        // 1. Check direct MongoDB first for guaranteed consistency and zero duplicacy
+        const mongo = await connectMongo();
+        let dbUser: any = null;
+        if (mongo) {
+          const usersCol = mongo.collection('users');
+          await usersCol.createIndex({ email: 1 }, { unique: true }).catch(() => {});
+          const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          dbUser = await usersCol.findOne({
+            email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') },
+          });
+        }
+
+        // 2. Fallback to in-memory db.users check
+        if (!dbUser) {
+          dbUser = db.users.find((u) => u.email && u.email.toLowerCase().trim() === cleanEmail);
+        }
 
         if (!dbUser) {
+          // No user exists with this email -> Create ONE new user
           const newUser: User & { passwordHash: string; photoURL?: string } = {
             id: user.id || `user_g_${Date.now()}`,
             email: cleanEmail,
@@ -49,9 +65,24 @@ const authOptions: NextAuthOptions = {
             image: profileImage,
             photoURL: profileImage,
           };
-          db.users.push(newUser);
+
+          // Guard against duplicacy before pushing
+          const alreadyExists = db.users.some(u => u.email && u.email.toLowerCase().trim() === cleanEmail);
+          if (!alreadyExists) {
+            db.users.push(newUser);
+          }
+
+          if (mongo) {
+            const usersCol = mongo.collection('users');
+            await usersCol.replaceOne(
+              { email: cleanEmail },
+              { _id: newUser.id, ...newUser },
+              { upsert: true }
+            );
+          }
           await saveDb(db);
         } else {
+          // User already exists! Prohibit duplicate creation.
           let modified = false;
           if (isAdmin && (dbUser.role !== 'admin' || dbUser.status !== 'approved')) {
             dbUser.role = 'admin';
@@ -66,6 +97,22 @@ const authOptions: NextAuthOptions = {
           if (displayName && (!dbUser.name || dbUser.name.includes('@'))) {
             dbUser.name = displayName;
             modified = true;
+          }
+
+          // Sync in-memory user
+          const inMemIdx = db.users.findIndex(u => u.email && u.email.toLowerCase().trim() === cleanEmail);
+          if (inMemIdx >= 0) {
+            db.users[inMemIdx] = { ...db.users[inMemIdx], ...dbUser };
+          } else {
+            db.users.push(dbUser);
+          }
+
+          if (mongo && modified) {
+            const usersCol = mongo.collection('users');
+            await usersCol.updateOne(
+              { email: cleanEmail },
+              { $set: { role: dbUser.role, status: dbUser.status, image: dbUser.image, photoURL: dbUser.photoURL, name: dbUser.name } }
+            );
           }
           if (modified) {
             await saveDb(db);
@@ -82,19 +129,32 @@ const authOptions: NextAuthOptions = {
       if (token?.email) {
         try {
           await ensureDbInit();
-          const db = getDb();
           const cleanEmail = token.email.toLowerCase().trim();
-          const dbUser = db.users.find((u) => u.email.toLowerCase() === cleanEmail);
+
+          const mongo = await connectMongo();
+          let dbUser: any = null;
+          if (mongo) {
+            const usersCol = mongo.collection('users');
+            const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            dbUser = await usersCol.findOne({
+              email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') },
+            });
+          }
+
+          if (!dbUser) {
+            const db = getDb();
+            dbUser = db.users.find((u) => u.email && u.email.toLowerCase().trim() === cleanEmail);
+          }
 
           if (dbUser) {
-            token.id = dbUser.id;
+            token.id = dbUser.id || (dbUser._id ? dbUser._id.toString() : '');
             token.role = dbUser.role;
             token.status = dbUser.status;
             token.name = dbUser.name;
             token.image = dbUser.image || dbUser.photoURL || token.picture || '';
 
             const tokenPayload = {
-              id: dbUser.id,
+              id: token.id,
               email: dbUser.email,
               role: dbUser.role,
               name: dbUser.name,

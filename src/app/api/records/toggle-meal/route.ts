@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate } from '@/src/lib/auth';
 import { getDb, ensureDbInit, saveDb } from '@/src/lib/db';
+import { getDhakaTime } from '@/src/lib/utils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,13 +30,11 @@ export async function POST(req: NextRequest) {
     const db = getDb();
 
     const userId = user!.id;
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    const { today, currentHour } = getDhakaTime();
     const requestDate = new Date(date + 'T00:00:00');
     const todayDate = new Date(today + 'T00:00:00');
     const daysAhead = Math.floor((requestDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
     const isToday = (date === today);
-    const currentHour = now.getHours();
 
     // Check cut-off time for today if attempting to turn OFF:
     // Lunch cut-off: 09:00 AM | Dinner cut-off: 03:00 PM (15:00)
@@ -161,10 +160,8 @@ export async function GET(req: NextRequest) {
     const lunchRecord = db.records.find(r => r.userId === userId && r.date === date && r.mealType === 'lunch');
     const dinnerRecord = db.records.find(r => r.userId === userId && r.date === date && r.mealType === 'dinner');
 
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    const { today, currentHour } = getDhakaTime();
     const isToday = (date === today);
-    const currentHour = now.getHours();
 
     const formattedLunch = {
       mealType: 'lunch' as const,

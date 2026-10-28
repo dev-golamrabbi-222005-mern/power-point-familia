@@ -156,6 +156,11 @@ export async function ensureDbInit(): Promise<DatabaseSchema> {
       const adminChangeRequestsCol = db.collection('adminChangeRequests');
       const settingsCol = db.collection('settings');
 
+      // Enforce unique index on users by email to strictly prohibit duplicacy
+      await usersCol.createIndex({ email: 1 }, { unique: true }).catch((err) => {
+        console.warn('Users email index notice:', err?.message);
+      });
+
       const usersCount = await usersCol.countDocuments();
       if (usersCount === 0) {
         const initData = getInitialDb();
@@ -188,8 +193,22 @@ export async function ensureDbInit(): Promise<DatabaseSchema> {
         return { id: doc.id || (_id ? _id.toString() : undefined), ...rest };
       };
 
+      // Deduplicate users by email (case-insensitive)
+      const userMap = new Map<string, any>();
+      for (const raw of users) {
+        const formatted = formatDoc(raw);
+        if (!formatted.email) continue;
+        const key = formatted.email.toLowerCase().trim();
+        if (!userMap.has(key)) {
+          userMap.set(key, formatted);
+        } else {
+          const prev = userMap.get(key);
+          userMap.set(key, { ...prev, ...formatted, fixedCosts: formatted.fixedCosts || prev.fixedCosts });
+        }
+      }
+
       memoryDb = {
-        users: users.map(formatDoc),
+        users: Array.from(userMap.values()),
         menus: menus.map(formatDoc),
         records: records.map(formatDoc),
         deposits: deposits.map(formatDoc),
@@ -216,6 +235,25 @@ export async function ensureDbInit(): Promise<DatabaseSchema> {
 }
 
 export async function saveDb(data: DatabaseSchema): Promise<void> {
+  // Deduplicate users by clean email before persisting
+  const userMap = new Map<string, any>();
+  for (const u of data.users || []) {
+    if (!u.email) continue;
+    const cleanKey = u.email.toLowerCase().trim();
+    if (!userMap.has(cleanKey)) {
+      userMap.set(cleanKey, { ...u, email: cleanKey });
+    } else {
+      const prev = userMap.get(cleanKey);
+      userMap.set(cleanKey, {
+        ...prev,
+        ...u,
+        email: cleanKey,
+        fixedCosts: u.fixedCosts || prev.fixedCosts,
+        pastMonthDue: u.pastMonthDue !== undefined ? u.pastMonthDue : prev.pastMonthDue,
+      });
+    }
+  }
+  data.users = Array.from(userMap.values());
   memoryDb = data;
 
   try {
@@ -227,19 +265,45 @@ export async function saveDb(data: DatabaseSchema): Promise<void> {
   const db = await connectMongo();
   if (db) {
     try {
+      // 1. Sync Users with email unique upsert (NEVER wipes users collection)
+      const usersCol = db.collection('users');
+      await usersCol.createIndex({ email: 1 }, { unique: true }).catch(() => {});
+      for (const user of data.users) {
+        const cleanEmail = user.email.toLowerCase().trim();
+        const docId = user.id || (user as any)._id || `user_g_${Date.now()}`;
+        const { _id, ...rest } = user as any;
+        await usersCol.replaceOne(
+          { email: cleanEmail },
+          { _id: docId, id: docId, email: cleanEmail, ...rest },
+          { upsert: true }
+        );
+      }
+
+      // 2. Safe sync helper for other collections
       const syncCollection = async (name: string, items: any[]) => {
         const col = db.collection(name);
-        await col.deleteMany({});
         if (items && items.length > 0) {
-          const docs = items.map((item) => {
-            const { id, ...rest } = item;
-            return { _id: id || item._id, id, ...rest };
+          const bulkOps = items.map((item) => {
+            const docId = item.id || item._id;
+            const { _id, ...rest } = item;
+            return {
+              replaceOne: {
+                filter: { _id: docId },
+                replacement: { _id: docId, id: docId, ...rest },
+                upsert: true,
+              },
+            };
           });
-          await col.insertMany(docs);
+          await col.bulkWrite(bulkOps);
+          const currentIds = items.map((i) => i.id || i._id).filter(Boolean);
+          if (currentIds.length > 0) {
+            await col.deleteMany({ _id: { $nin: currentIds } });
+          }
+        } else {
+          await col.deleteMany({});
         }
       };
 
-      await syncCollection('users', data.users);
       await syncCollection('menus', data.menus);
       await syncCollection('records', data.records);
       await syncCollection('deposits', data.deposits);

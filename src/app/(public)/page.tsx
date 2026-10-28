@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import Hero from '@/src/components/Hero';
 import { MealMenu } from '@/src/types';
+import { showErrorAlert } from '@/src/lib/alerts';
 
 export default function Home() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function Home() {
         login(data.token, data.user);
         router.push('/dashboard');
       } else {
-        alert(data.message || 'Demo login failed');
+        showErrorAlert('Login Failed', data.message || 'Demo login failed');
       }
     } catch (e) {
       console.error(e);

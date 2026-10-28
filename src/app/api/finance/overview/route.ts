@@ -88,9 +88,10 @@ export async function GET(req: NextRequest) {
       .filter(r => r.date.startsWith(currentMonth))
       .reduce((sum, r) => sum + (r.count || 0), 0);
 
-    const liveMealRate = totalMessMeals > 0 
+    const liveMealRate = (totalMessMeals > 0 && totalMessBazaar > 0)
       ? Math.round((totalMessBazaar / totalMessMeals) * 100) / 100 
-      : db.settings.mealRate || 45;
+      : 0;
+    const baseRate = db.settings.mealRate || 45;
 
     const actualMealCost = Math.round(myTotalMeals * liveMealRate);
     const actualTotalCost = totalFixedCostPaid + actualMealCost;

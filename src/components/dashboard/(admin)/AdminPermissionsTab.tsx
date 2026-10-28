@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, MonthlySummary, AdminChangeRequest } from '@/src/types';
 import { ShieldCheck, CheckCircle2, Sliders, Save, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { showSuccessAlert, showErrorAlert, showConfirmAlert } from '@/src/lib/alerts';
 
 interface AdminPermissionsTabProps {
   token: string;
@@ -120,20 +121,28 @@ export default function AdminPermissionsTab({ token, mealRate, onRefreshSettings
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
+        showSuccessAlert('Success', data.message);
         fetchPermissionsData();
       } else {
-        alert(data.message || 'Action failed');
+        showErrorAlert('Action Failed', data.message || 'Action failed');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      showErrorAlert('Error', e.message || 'An error occurred');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleApproveMonthEnd = async (summaryId: string, action: 'approve' | 'reject') => {
-    if (action === 'approve' && !window.confirm('Are you sure you want to approve and archive this month-end reset? This will clear active daily meals/expenses and carry forward member ending balances.')) return;
+    if (action === 'approve') {
+      const confirmed = await showConfirmAlert(
+        'Approve Month-End Reset?',
+        'This will clear active daily meals/expenses and carry forward member ending balances.',
+        'Yes, Approve'
+      );
+      if (!confirmed) return;
+    }
     
     setActionLoading(true);
     try {
@@ -147,13 +156,14 @@ export default function AdminPermissionsTab({ token, mealRate, onRefreshSettings
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
+        showSuccessAlert('Success', data.message);
         fetchPermissionsData();
       } else {
-        alert(data.message || 'Action failed.');
+        showErrorAlert('Action Failed', data.message || 'Action failed.');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      showErrorAlert('Error', e.message || 'An error occurred');
     } finally {
       setActionLoading(false);
     }

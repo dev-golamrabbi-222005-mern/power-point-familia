@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Deposit, RefundRequest, User as UserType } from '@/src/types';
 import EmergencyMealRequestCard from './emergency-meal-request-card';
+import { showSuccessAlert, showErrorAlert, showWarningAlert } from '@/src/lib/alerts';
 
 interface ManagerTicketsTabProps {
   token: string;
@@ -91,10 +92,11 @@ export default function ManagerTicketsTab({ token, onError, onRefreshData, prefi
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error('Status update failed');
+      showSuccessAlert('Success', `Deposit status updated to ${status}`);
       fetchTickets();
       onRefreshData?.();
     } catch (err: any) {
-      alert(err.message || 'Action failed');
+      showErrorAlert('Action Failed', err.message || 'Action failed');
     }
   };
 
@@ -109,21 +111,22 @@ export default function ManagerTicketsTab({ token, onError, onRefreshData, prefi
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error('Refund status update failed');
+      showSuccessAlert('Success', `Refund request ${status}`);
       fetchTickets();
       onRefreshData?.();
     } catch (err: any) {
-      alert(err.message || 'Action failed');
+      showErrorAlert('Action Failed', err.message || 'Action failed');
     }
   };
 
   const handleSendWarning = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetUserId) {
-      alert('Please select a member to warn');
+      showWarningAlert('Missing Member', 'Please select a member to warn');
       return;
     }
     if (!warnMessage.trim()) {
-      alert('Please enter warning message');
+      showWarningAlert('Missing Message', 'Please enter warning message');
       return;
     }
 
@@ -146,15 +149,12 @@ export default function ManagerTicketsTab({ token, onError, onRefreshData, prefi
 
       if (!res.ok) throw new Error('Failed to issue warning ticket');
 
-      setWarnSuccess('Warning ticket issued successfully to member!');
-      setTimeout(() => {
-        setIsWarnModalOpen(false);
-        setWarnSuccess('');
-        setWarnMessage('');
-        fetchTickets();
-      }, 1500);
+      showSuccessAlert('Ticket Issued', 'Warning ticket issued successfully to member!');
+      setIsWarnModalOpen(false);
+      setWarnMessage('');
+      fetchTickets();
     } catch (err: any) {
-      alert(err.message || 'Error sending warning ticket');
+      showErrorAlert('Error', err.message || 'Error sending warning ticket');
     } finally {
       setWarnSubmitting(false);
     }

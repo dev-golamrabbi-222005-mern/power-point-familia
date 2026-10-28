@@ -37,46 +37,62 @@ export async function POST(req: NextRequest) {
     const { error, user } = authenticate(req, ['member', 'manager', 'admin']);
     if (error) return error;
 
-    const { userId, amount, date, paymentMethod, transactionId, remarks, type } = await req.json();
+    const { userId, amount, date, paymentMethod, transactionId, remarks, type, utilityType, month } = await req.json();
 
-    const targetUserId = user!.role === 'member'
+    const targetUserId = (user!.role === 'member' || !userId)
       ? user!.id
-      : userId || user!.id;
+      : userId;
 
-    if (!targetUserId || !amount || !date || !paymentMethod || !transactionId) {
+    const depositDate = date || new Date().toISOString().split('T')[0];
+
+    if (!amount || Number(amount) <= 0) {
       return NextResponse.json(
-        { message: 'userId, amount, date, paymentMethod, and transactionId are required.' },
+        { message: 'Payment amount must be greater than 0.' },
         { status: 400 }
       );
     }
 
-    if (Number(amount) <= 0) {
+    if (!paymentMethod) {
       return NextResponse.json(
-        { message: 'Amount must be greater than 0.' },
+        { message: 'Payment method is required.' },
+        { status: 400 }
+      );
+    }
+
+    if (!transactionId || !transactionId.toString().trim()) {
+      return NextResponse.json(
+        { message: 'Transaction ID or Reference number is required.' },
         { status: 400 }
       );
     }
 
     await ensureDbInit();
     const db = getDb();
-    const newDeposit: Deposit = {
+    const memberObj = db.users.find(u => u.id === targetUserId);
+
+    const isFixedCost = type === 'fixed_cost' || Boolean(utilityType) || (remarks && remarks.toLowerCase().includes('fixed'));
+
+    const newDeposit: Deposit & { utilityType?: string; month?: string } = {
       id: `dep-${Date.now()}`,
       userId: targetUserId,
+      userName: memberObj ? memberObj.name : user!.name,
       amount: Number(amount),
-      date,
+      date: depositDate,
       paymentMethod,
-      transactionId,
+      transactionId: transactionId.toString().trim(),
       status: 'pending',
-      type: type || 'meal_cash',
-      remarks,
+      type: type || (isFixedCost ? 'fixed_cost' : 'meal_cash'),
+      remarks: remarks || (isFixedCost ? 'Fixed Expense Payment' : 'Meal Cash Deposit'),
+      utilityType: utilityType || (isFixedCost && type !== 'fixed_cost' ? type : undefined),
+      month: month || depositDate.slice(0, 7),
     };
 
     db.deposits.push(newDeposit);
-    saveDb(db);
+    await saveDb(db);
 
     return NextResponse.json({
       deposit: newDeposit,
-      message: 'Deposit request submitted successfully. Waiting for Manager/Admin approval.'
+      message: 'Payment ticket submitted successfully! Awaiting manager verification.'
     }, { status: 201 });
   } catch (error) {
     console.error('Deposit submission error', error);

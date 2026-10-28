@@ -18,6 +18,7 @@ import {
   Lock,
 } from "lucide-react";
 import { User as UserType, FixedUtilityType } from "@/src/types";
+import { showSuccessAlert, showErrorAlert, showWarningAlert } from "@/src/lib/alerts";
 
 interface ManagerFinanceTabProps {
   token: string;
@@ -80,12 +81,12 @@ export default function ManagerFinanceTab({
 
   const openAssignFixedModal = (usr: UserType) => {
     setFixedAssignUser(usr);
-    setAssignRent(usr.fixedCosts?.rent?.toString() || "");
-    setAssignElectricity(usr.fixedCosts?.electricity?.toString() || "");
-    setAssignWifi(usr.fixedCosts?.wifi?.toString() || "");
-    setAssignGas(usr.fixedCosts?.gas?.toString() || "");
-    setAssignServant(usr.fixedCosts?.servant?.toString() || "");
-    setAssignPastDue(usr.pastMonthDue?.toString() || "");
+    setAssignRent(usr.fixedCosts?.rent !== undefined && usr.fixedCosts.rent > 0 ? usr.fixedCosts.rent.toString() : "");
+    setAssignElectricity(usr.fixedCosts?.electricity !== undefined && usr.fixedCosts.electricity > 0 ? usr.fixedCosts.electricity.toString() : "");
+    setAssignWifi(usr.fixedCosts?.wifi !== undefined && usr.fixedCosts.wifi > 0 ? usr.fixedCosts.wifi.toString() : "");
+    setAssignGas(usr.fixedCosts?.gas !== undefined && usr.fixedCosts.gas > 0 ? usr.fixedCosts.gas.toString() : "");
+    setAssignServant(usr.fixedCosts?.servant !== undefined && usr.fixedCosts.servant > 0 ? usr.fixedCosts.servant.toString() : "");
+    setAssignPastDue(usr.pastMonthDue !== undefined && usr.pastMonthDue > 0 ? usr.pastMonthDue.toString() : "");
   };
 
   const handleSaveFixedAssignment = async (e: React.FormEvent) => {
@@ -115,11 +116,15 @@ export default function ManagerFinanceTab({
       const data = await res.json();
       if (!res.ok)
         throw new Error(data.message || "Failed to assign fixed costs");
-      alert(data.message || "Fixed costs & due assigned successfully!");
+      
       setFixedAssignUser(null);
+      await showSuccessAlert(
+        "Fixed Costs Assigned!",
+        data.message || `Fixed costs & dues assigned successfully for ${fixedAssignUser.name}`
+      );
       fetchFinanceData();
     } catch (err: any) {
-      alert(err.message || "Error assigning fixed costs");
+      showErrorAlert("Assignment Error", err.message || "Error assigning fixed costs");
     } finally {
       setAssigningFixed(false);
     }
@@ -155,7 +160,7 @@ export default function ManagerFinanceTab({
         fetch("/api/utilities", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch("/api/public/ledger", {
+        fetch("/api/utilities/pay", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -168,6 +173,7 @@ export default function ManagerFinanceTab({
       const deposits: any[] = depositsRes.ok ? await depositsRes.json() : [];
       const expenses: any[] = expensesRes.ok ? await expensesRes.json() : [];
       const utilitiesData = billsRes.ok ? await billsRes.json() : { bills: [] };
+      const billPayments: any[] = paymentsRes.ok ? await paymentsRes.json() : [];
 
       const currentMonth = new Date().toISOString().split("T")[0].slice(0, 7);
       const todayObj = new Date();
@@ -186,10 +192,9 @@ export default function ManagerFinanceTab({
       const approvedDeposits = deposits.filter(
         (d) => d.status === "approved" && d.date.startsWith(currentMonth),
       );
-      const totalMealCashCollected = approvedDeposits.reduce(
-        (sum, d) => sum + d.amount,
-        0,
-      );
+      const totalMealCashCollected = approvedDeposits
+        .filter((d) => d.type !== "fixed_cost" && !d.remarks?.toLowerCase().includes("fixed"))
+        .reduce((sum, d) => sum + d.amount, 0);
       setTotalRemainingMealCash(totalMealCashCollected - messMealCost);
 
       // 3. Fixed Payments
@@ -210,18 +215,43 @@ export default function ManagerFinanceTab({
 
       const rows: MemberFinanceRow[] = users.map((member) => {
         // Fixed costs share & paid
-        const fixedShare =
-          member.fixedCosts?.customFixedTotal !== undefined
-            ? member.fixedCosts.customFixedTotal
-            : Math.round(totalFixedMessCost / memberCount);
+        let assignedTotal: number | undefined = undefined;
+        if (member.fixedCosts) {
+          if (typeof member.fixedCosts.customFixedTotal === 'number' && member.fixedCosts.customFixedTotal > 0) {
+            assignedTotal = member.fixedCosts.customFixedTotal;
+          } else {
+            const sumIndividual =
+              Number(member.fixedCosts.rent || 0) +
+              Number(member.fixedCosts.electricity || 0) +
+              Number(member.fixedCosts.wifi || 0) +
+              Number(member.fixedCosts.gas || 0) +
+              Number(member.fixedCosts.servant || 0);
+            if (sumIndividual > 0) assignedTotal = sumIndividual;
+          }
+        }
 
-        const memberPayments = deposits.filter(
+        const fixedShare = assignedTotal !== undefined
+          ? assignedTotal
+          : Math.round(totalFixedMessCost / memberCount);
+
+        const depositFixedPayments = deposits.filter(
           (d) =>
             d.userId === member.id &&
             d.status === "approved" &&
-            d.remarks?.includes("Fixed Expense"),
+            (d.type === "fixed_cost" ||
+             d.remarks?.toLowerCase().includes("fixed") ||
+             d.remarks?.toLowerCase().includes("basha vara") ||
+             d.remarks?.toLowerCase().includes("rent") ||
+             d.remarks?.toLowerCase().includes("bill") ||
+             d.remarks?.toLowerCase().includes("utility"))
         );
-        const fixedPaid = memberPayments.reduce((sum, d) => sum + d.amount, 0);
+        const depositFixedPaid = depositFixedPayments.reduce((sum, d) => sum + (d.amount || 0), 0);
+
+        const billPaymentsPaid = billPayments
+          .filter((p) => p.userId === member.id && p.month === currentMonth)
+          .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+        const fixedPaid = Math.max(depositFixedPaid, billPaymentsPaid);
         const fixedStatus =
           fixedPaid >= fixedShare && fixedShare > 0
             ? "paid"
@@ -235,7 +265,8 @@ export default function ManagerFinanceTab({
             (d) =>
               d.userId === member.id &&
               d.status === "approved" &&
-              !d.remarks?.includes("Fixed Expense"),
+              d.type !== "fixed_cost" &&
+              !d.remarks?.toLowerCase().includes("fixed"),
           )
           .reduce((sum, d) => sum + d.amount, 0);
 
@@ -341,14 +372,15 @@ export default function ManagerFinanceTab({
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to submit request");
 
-      alert(
+      showSuccessAlert(
+        "Request Submitted",
         data.message ||
-          "Waiting for Admin approval for making significant change.",
+          "Waiting for Admin approval for making significant change."
       );
       setEditingMember(null);
       fetchFinanceData();
     } catch (err: any) {
-      alert(err.message || "Error submitting change request");
+      showErrorAlert("Error", err.message || "Error submitting change request");
     } finally {
       setEditSubmitting(false);
     }

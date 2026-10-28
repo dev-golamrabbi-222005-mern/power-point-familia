@@ -7,6 +7,7 @@ import {
   Search,
   RefreshCw,
 } from "lucide-react";
+import { showSuccessAlert, showErrorAlert, showWarningAlert, showConfirmAlert } from "@/src/lib/alerts";
 
 interface AdminUserDirectoryTabProps {
   currentUser: User;
@@ -70,10 +71,11 @@ export default function AdminUserDirectoryTab({
       if (!res.ok)
         throw new Error(data.message || "Failed to update user profile");
 
+      showSuccessAlert("Success", "User profile updated successfully");
       setEditingUser(null);
       onRefreshData();
     } catch (err: any) {
-      alert(err.message || "Error updating user profile");
+      showErrorAlert("Update Error", err.message || "Error updating user profile");
     } finally {
       setSavingEdit(false);
     }
@@ -81,15 +83,16 @@ export default function AdminUserDirectoryTab({
 
   const handleDeleteUser = async (usr: User) => {
     if (usr.id === currentUser.id) {
-      alert("You cannot delete your own superuser account!");
+      showWarningAlert("Action Not Allowed", "You cannot delete your own superuser account!");
       return;
     }
 
-    if (
-      !window.confirm(
-        `Are you sure you want to permanently delete user "${usr.name}" (${usr.email})? This action cannot be undone!`,
-      )
-    ) {
+    const confirmed = await showConfirmAlert(
+      "Delete User?",
+      `Are you sure you want to permanently delete user "${usr.name}" (${usr.email})? This action cannot be undone!`,
+      "Yes, Delete"
+    );
+    if (!confirmed) {
       return;
     }
 
@@ -101,9 +104,10 @@ export default function AdminUserDirectoryTab({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to delete user");
+      showSuccessAlert("Deleted", "User deleted successfully");
       onRefreshData();
     } catch (err: any) {
-      alert(err.message || "Error deleting user");
+      showErrorAlert("Delete Error", err.message || "Error deleting user");
     } finally {
       setUpdatingId(null);
     }
@@ -115,7 +119,7 @@ export default function AdminUserDirectoryTab({
     newStatus: User["status"],
   ) => {
     if (targetId === currentUser.id) {
-      alert("You cannot modify your own superuser role!");
+      showWarningAlert("Action Not Allowed", "You cannot modify your own superuser role!");
       return;
     }
     setUpdatingId(targetId);
@@ -130,9 +134,10 @@ export default function AdminUserDirectoryTab({
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Failed to update.");
+      showSuccessAlert("Updated", "User role/status updated successfully");
       onRefreshData();
     } catch (err: any) {
-      alert(err.message || "Error updating user.");
+      showErrorAlert("Error", err.message || "Error updating user.");
     } finally {
       setUpdatingId(null);
     }

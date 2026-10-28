@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
+import { getDb, saveDb, ensureDbInit, connectMongo } from '@/src/lib/db';
 import { UserRole } from '@/src/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'SUPER_SECRET_FAMILIA_JWT_KEY';
@@ -19,7 +19,21 @@ export async function POST(req: NextRequest) {
 
     await ensureDbInit();
     const db = getDb();
-    const existingUser = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const cleanEmail = email.toLowerCase().trim();
+
+    const mongo = await connectMongo();
+    let existingUser: any = null;
+    if (mongo) {
+      const usersCol = mongo.collection('users');
+      const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      existingUser = await usersCol.findOne({
+        email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') },
+      });
+    }
+
+    if (!existingUser) {
+      existingUser = db.users.find(u => u.email && u.email.toLowerCase().trim() === cleanEmail);
+    }
 
     if (existingUser) {
       return NextResponse.json(
@@ -29,10 +43,11 @@ export async function POST(req: NextRequest) {
     }
 
     const isAdminEmail = 
-      email.toLowerCase() === 'g.rabbi2005.555@gmail.com' || 
-      email.toLowerCase() === 'admin@familia.com';
+      cleanEmail === 'g.rabbi2005.555@gmail.com' || 
+      cleanEmail === 'admin@familia.com' ||
+      cleanEmail === 'g.rabbi.dev@gmail.com';
     
-    const role: UserRole = isAdminEmail ? 'admin' : 'user';
+    const role: UserRole = isAdminEmail ? 'admin' : 'member';
     const status: 'pending' | 'approved' | 'rejected' = isAdminEmail ? 'approved' : 'pending';
 
     const salt = bcrypt.genSaltSync(10);
@@ -40,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     const newUser = {
       id: `user-${Date.now()}`,
-      email: email.toLowerCase(),
+      email: cleanEmail,
       name,
       phone,
       role,
@@ -51,7 +66,7 @@ export async function POST(req: NextRequest) {
     };
 
     db.users.push(newUser);
-    saveDb(db);
+    await saveDb(db);
 
     const tokenUser = {
       id: newUser.id,

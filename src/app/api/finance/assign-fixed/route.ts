@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticate } from '@/src/lib/auth';
-import { getDb, saveDb, ensureDbInit } from '@/src/lib/db';
+import { getDb, saveDb, ensureDbInit, connectMongo } from '@/src/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save fixed costs breakdown and past month due on target user object
-    targetUser.fixedCosts = {
+    const newFixedCosts = {
       rent: Number(fixedCosts?.rent || 0),
       electricity: Number(fixedCosts?.electricity || 0),
       wifi: Number(fixedCosts?.wifi || 0),
@@ -31,9 +31,20 @@ export async function POST(req: NextRequest) {
       customFixedTotal: (Number(fixedCosts?.rent || 0) + Number(fixedCosts?.electricity || 0) + Number(fixedCosts?.wifi || 0) + Number(fixedCosts?.gas || 0) + Number(fixedCosts?.servant || 0))
     };
 
+    targetUser.fixedCosts = newFixedCosts;
     targetUser.pastMonthDue = Number(pastMonthDue || 0);
 
-    saveDb(db);
+    // Direct MongoDB atomic update
+    const mongo = await connectMongo();
+    if (mongo) {
+      const usersCol = mongo.collection('users');
+      await usersCol.updateOne(
+        { $or: [{ id: userId }, { _id: userId }] },
+        { $set: { fixedCosts: newFixedCosts, pastMonthDue: targetUser.pastMonthDue } }
+      );
+    }
+
+    await saveDb(db);
 
     return NextResponse.json({
       message: `Fixed costs & past due assigned successfully for ${targetUser.name}!`,

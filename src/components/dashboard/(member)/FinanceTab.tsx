@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { FinanceOverviewData, FixedExpenseItem, FixedUtilityType } from '@/src/types';
+import { showSuccessAlert, showErrorAlert, showWarningAlert } from '@/src/lib/alerts';
 
 interface FinanceTabProps {
   token: string;
@@ -89,39 +90,33 @@ export default function FinanceTab({ token, onError }: FinanceTabProps) {
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) {
-      alert('Please enter a valid payment amount');
+      showWarningAlert('Invalid Amount', 'Please enter a valid payment amount greater than 0');
       return;
     }
     if (!transactionId.trim()) {
-      alert('Please enter Transaction ID or reference number');
+      showWarningAlert('Missing Reference', 'Please enter Transaction ID or reference number');
       return;
     }
 
     try {
       setSubmitting(true);
+      const todayStr = new Date().toISOString().split('T')[0];
+      const currentMonth = todayStr.slice(0, 7);
       
-      let endpoint = '/api/deposits';
-      let payload: any = {
+      const payload: any = {
         amount: Number(amount),
+        date: todayStr,
+        month: currentMonth,
         paymentMethod,
-        transactionId,
+        transactionId: transactionId.trim(),
         remarks: modalType === 'meal_cash' 
-          ? `Meal Cash Deposit (${remarks})`
-          : `Fixed Expense Payment: ${selectedUtility?.label || modalType}`,
+          ? `Meal Cash Deposit${remarks ? ` (${remarks})` : ''}`
+          : `Fixed Expense Payment: ${selectedUtility?.label || modalType}${remarks ? ` - ${remarks}` : ''}`,
+        type: modalType === 'meal_cash' ? 'meal_cash' : 'fixed_cost',
+        utilityType: selectedUtility?.type,
       };
 
-      if (modalType !== 'meal_cash' && selectedUtility) {
-        endpoint = '/api/utilities/pay';
-        payload = {
-          type: selectedUtility.type,
-          amount: Number(amount),
-          paymentMethod,
-          transactionId,
-          remarks: `Fixed Bill Payment - ${selectedUtility.label}`,
-        };
-      }
-
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/deposits', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,19 +125,19 @@ export default function FinanceTab({ token, onError }: FinanceTabProps) {
         body: JSON.stringify(payload),
       });
 
+      const resData = await res.json();
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || 'Payment ticket submission failed');
+        throw new Error(resData.message || 'Payment ticket submission failed');
       }
 
-      setSuccessMsg('Payment ticket submitted successfully! Awaiting manager verification.');
-      setTimeout(() => {
-        setIsModalOpen(false);
-        setSuccessMsg('');
-        fetchFinanceOverview();
-      }, 2000);
+      setIsModalOpen(false);
+      await showSuccessAlert(
+        'Ticket Submitted!',
+        'Your payment ticket has been submitted for manager verification.'
+      );
+      fetchFinanceOverview();
     } catch (err: any) {
-      alert(err.message || 'Error submitting payment ticket');
+      showErrorAlert('Submission Failed', err.message || 'Error submitting payment ticket');
     } finally {
       setSubmitting(false);
     }

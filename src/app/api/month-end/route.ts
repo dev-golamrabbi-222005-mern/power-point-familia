@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
     const totalMealsCount = db.records.reduce((sum, r) => sum + r.count, 0);
 
     // 3. Live Final Meal Rate
-    const finalMealRate = totalMealsCount > 0
-      ? totalBazaarExpense / totalMealsCount
-      : (db.settings?.mealRate || 45);
+    const finalMealRate = (totalMealsCount > 0 && totalBazaarExpense > 0)
+      ? Math.round((totalBazaarExpense / totalMealsCount) * 100) / 100
+      : 0;
 
     // 4. Calculate individual member summaries & carry forwards
     const approvedMembers = db.users.filter(u => u.status === 'approved');

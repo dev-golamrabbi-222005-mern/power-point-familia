@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { getDb, ensureDbInit, saveDb } from '@/src/lib/db';
+import { getDb, ensureDbInit, saveDb, connectMongo } from '@/src/lib/db';
 import { User } from '@/src/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'power_point_familia_super_secure_jwt_secret_key_2026';
@@ -21,7 +21,20 @@ export async function POST(req: NextRequest) {
     await ensureDbInit();
     const db = getDb();
 
-    let user = db.users.find((u) => u.email.toLowerCase() === cleanEmail);
+    // Check MongoDB directly for consistency
+    const mongo = await connectMongo();
+    let user: any = null;
+    if (mongo) {
+      const usersCol = mongo.collection('users');
+      const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      user = await usersCol.findOne({
+        email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') },
+      });
+    }
+
+    if (!user) {
+      user = db.users.find((u) => u.email && u.email.toLowerCase().trim() === cleanEmail);
+    }
 
     if (!user) {
       // Create new user via Google Sign-In
@@ -39,7 +52,9 @@ export async function POST(req: NextRequest) {
         photoURL: profilePic,
       };
 
-      db.users.push(newUser);
+      if (!db.users.some(u => u.email && u.email.toLowerCase().trim() === cleanEmail)) {
+        db.users.push(newUser);
+      }
       user = newUser;
       await saveDb(db);
     } else {

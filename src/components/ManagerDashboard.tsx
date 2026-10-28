@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { User, MealMenu, SystemSettings } from '../types';
 import ManagerOverviewTab from './dashboard/(manager)/ManagerOverviewTab';
 import { TrendingUp, RefreshCw } from 'lucide-react';
+import { showSuccessAlert, showErrorAlert, showConfirmAlert } from '@/src/lib/alerts';
 
 interface ManagerDashboardProps {
   user: User;
@@ -49,7 +50,12 @@ export default function ManagerDashboard({
   }, [token]);
 
   const handleInitiateMonthEnd = async () => {
-    if (!window.confirm('Initiate Month-End Reset calculation and submit request to Admin?')) return;
+    const confirmed = await showConfirmAlert(
+      'Initiate Month-End Reset?',
+      'This will calculate month-end balances and submit a reset request to Admin.',
+      'Yes, Initiate'
+    );
+    if (!confirmed) return;
     try {
       setInitiateResetLoading(true);
       const res = await fetch('/api/month-end', {
@@ -62,9 +68,13 @@ export default function ManagerDashboard({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Initiate reset failed');
+      showSuccessAlert(
+        'Reset Initiated',
+        'Month-End Reset initiated successfully! Sent to Admin for final approval.'
+      );
       setResetStatusMsg('Month-End Reset initiated successfully! Sent to Admin for final approval.');
     } catch (err: any) {
-      alert(err.message || 'Month end reset error');
+      showErrorAlert('Error', err.message || 'Month end reset error');
     } finally {
       setInitiateResetLoading(false);
     }

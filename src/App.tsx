@@ -9,6 +9,7 @@ import ManagerDashboard from "./components/ManagerDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import { Utensils, Shield, KeyRound, Sparkles } from "lucide-react";
 import { PPFLogo } from "./components/shared/PPFLogo";
+import { showErrorAlert } from "./lib/alerts";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -141,7 +142,7 @@ export default function App() {
       if (response.ok && data.token) {
         handleAuthSuccess(data.user, data.token);
       } else {
-        alert(data.message || "Login failed. Server may not be running.");
+        showErrorAlert("Login Failed", data.message || "Login failed. Server may not be running.");
       }
     } catch (err) {
       console.error(err);

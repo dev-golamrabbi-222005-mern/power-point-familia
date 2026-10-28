@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
       role: user.role,
       name: user.name,
       status: user.status,
+      image: (user as any).image || (user as any).photoURL || '',
+      photoURL: (user as any).photoURL || (user as any).image || '',
     };
 
     const token = jwt.sign(tokenUser, JWT_SECRET, { expiresIn: '7d' });

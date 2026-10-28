@@ -20,6 +20,7 @@ import {
   ArrowRight,
   User as UserIcon,
 } from 'lucide-react';
+import Logo from '../shared/PPFLogo';
 
 export default function DashboardTopBar() {
   const router = useRouter();
@@ -79,19 +80,7 @@ export default function DashboardTopBar() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-3">
         {/* Left side: Power Point Familia branding & Role badge */}
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white font-black text-xs shadow-md shadow-emerald-950/40 group-hover:scale-105 transition-transform">
-              PPF
-            </div>
-            <div className="hidden sm:block leading-none">
-              <span className="font-display font-extrabold text-sm text-zinc-100 tracking-tight">
-                Power Point <span className="text-emerald-400">Familia</span>
-              </span>
-              <p className="text-[9px] text-zinc-500 font-mono tracking-widest uppercase">
-                App Shell
-              </p>
-            </div>
-          </Link>
+          <Logo/>
 
           {/* Role Badge */}
           <div className="flex items-center gap-1.5 shrink-0">
@@ -145,7 +134,7 @@ export default function DashboardTopBar() {
               {liveMealRate > 0 ? (
                 <>
                   ৳{liveMealRate.toFixed(1)}
-                  <span className="text-[10px] text-zinc-400 font-normal">/মিল</span>
+                  <span className="text-[10px] text-zinc-400 font-normal">/Meal</span>
                 </>
               ) : (
                 <>

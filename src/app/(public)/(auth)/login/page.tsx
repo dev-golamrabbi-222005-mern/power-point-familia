@@ -116,13 +116,14 @@ export default function LoginPage() {
           <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
           <span>Quick Demo Testing (Optional)</span>
         </p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => handleDemoLogin('admin@familia.com')}
-            className="py-1.5 px-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+            onClick={() => handleDemoLogin('g.rabbi.dev@gmail.com')}
+            className="py-2 px-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold rounded-xl transition-all cursor-pointer col-span-2 flex items-center justify-center gap-2"
           >
-            Admin Demo
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Login as Super Admin (g.rabbi.dev)</span>
           </button>
           <button
             type="button"
@@ -134,7 +135,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => handleDemoLogin('member1@familia.com')}
-            className="py-1.5 px-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+            className="py-1.5 px-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
           >
             Member Demo
           </button>

@@ -25,6 +25,7 @@ import {
   FileText
 } from 'lucide-react';
 import { BazaarAssignment, BazaarExpense, MealMenu, User, BazaarPair } from '@/src/types';
+import { showSuccessAlert, showErrorAlert, showWarningAlert } from '@/src/lib/alerts';
 
 interface ManagerMealsTabProps {
   token: string;
@@ -160,7 +161,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
       await fetchMealsData();
       onRefreshMenus();
     } catch (err: any) {
-      alert(err.message || 'Action failed');
+      showErrorAlert('Action Failed', err.message || 'Action failed');
     } finally {
       setRequestActionLoading(null);
     }
@@ -180,14 +181,12 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
 
       if (!res.ok) throw new Error('Force cancel failed');
       const data = await res.json();
-      setCancelSuccess(data.message || 'Cancelled successfully');
-      setTimeout(() => {
-        setIsCancelModalOpen(false);
-        setCancelSuccess('');
-        fetchMealsData();
-      }, 1500);
+      showSuccessAlert('Meals Cancelled', data.message || 'Cancelled successfully');
+      setIsCancelModalOpen(false);
+      setCancelSuccess('');
+      fetchMealsData();
     } catch (err: any) {
-      alert(err.message || 'Force cancel error');
+      showErrorAlert('Error', err.message || 'Force cancel error');
     } finally {
       setCancelling(false);
     }
@@ -196,7 +195,7 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
   const handleAssignBazaar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignUserId || !assignDate) {
-      alert('Select primary member and date');
+      showWarningAlert('Incomplete Form', 'Select primary member and date');
       return;
     }
 
@@ -220,13 +219,14 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
       });
 
       if (!res.ok) throw new Error('Bazaar assignment failed');
+      showSuccessAlert('Assigned', 'Bazaar duty assigned successfully!');
       setShowAssignForm(false);
       setAssignShoppingList('');
       setAssignBudget('');
       setAssignMember2Id('');
       fetchMealsData();
     } catch (err: any) {
-      alert(err.message || 'Assignment failed');
+      showErrorAlert('Error', err.message || 'Assignment failed');
     } finally {
       setAssigning(false);
     }
@@ -243,10 +243,11 @@ export default function ManagerMealsTab({ token, menus, onRefreshMenus, onError 
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error('Status update failed');
+      showSuccessAlert('Status Updated', `Bazaar expense ${status}`);
       fetchMealsData();
       onRefreshMenus();
     } catch (err: any) {
-      alert(err.message || 'Action failed');
+      showErrorAlert('Action Failed', err.message || 'Action failed');
     }
   };
 

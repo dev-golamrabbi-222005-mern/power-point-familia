@@ -3,6 +3,7 @@
 import React from 'react';
 import { useDashboard } from '@/src/context/DashboardContext';
 import LiveBazaarModal from './LiveBazaarModal';
+import { showErrorAlert } from '@/src/lib/alerts';
 
 export default function GlobalLiveBazaarModal() {
   const { 
@@ -27,7 +28,7 @@ export default function GlobalLiveBazaarModal() {
         refreshAll();
       }}
       onError={(err) => {
-        alert(err);
+        showErrorAlert('Bazaar Error', err);
       }}
     />
   );
